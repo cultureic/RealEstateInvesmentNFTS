@@ -1,0 +1,23 @@
+service : {
+  canister_and_caller_pub_key: () ->
+   (variant {
+      Err: text;
+      Ok: record {public_key: blob;};
+    });
+  public_key: () -> (variant {
+                       Err: text;
+                       Ok: record {public_key: text;};
+                     });
+  sign: (blob) -> (variant {
+                     Err: text;
+                     Ok: text;
+                   });
+  signByCallerAndCanister: (text) -> (variant {
+                                        Err: text;
+                                        Ok: blob;
+                                      });
+  signOG: (blob) -> (variant {
+                       Err: text;
+                       Ok: record {signature: blob;};
+                     });
+}

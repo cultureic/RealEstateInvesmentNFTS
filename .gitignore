@@ -1,0 +1,8 @@
+dist
+node_modules
+tsconfig.tsbuildinfo
+yarn-error.log
+
+.mops
+.dfx
+.env
