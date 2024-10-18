@@ -10,7 +10,6 @@ import Nat "mo:base/Nat";
 import Prelude "mo:base/Prelude";
 import Nat32 "mo:base/Nat32";
 import Nat64 "mo:base/Nat64";
-import Cycles "mo:base/ExperimentalCycles";
 import Array "mo:base/Array";
 import Sha256 "mo:sha2/Sha256";
 
@@ -33,62 +32,20 @@ import Hex "./Hex";
 
 actor STXSigner {
 
-    //   type Bitcoin_Address = Text;
-    //   type Satoshi = Nat64;
 
-    //   type Outpoint = {
-    //     txid : Blob;
-    //     vout : Nat32;
-    //   };
-
-    //   type Bitcoin_Network = {
-    //     #mainnet;
-    //     #testnet;
-    //   };
-
-    //   type Filter = {
-    //     min_confirmations : Nat32;
-    //     page : Blob;
-    //   };
-
-    //   type Utxos = {
-    //     outpoint : Outpoint;
-    //     value : Satoshi;
-    //     height : Nat32;
-    //   };
-
-    //   type Blob_hash = Blob;
-
-    /*type get_utxos_request = record {
-  address : bitcoin_address;
-  network: bitcoin_network;
-  filter: opt variant {
-    min_confirmations: nat32;
-    page: blob;
-  };
-}
-
-type get_utxos_response = record {
-  utxos: vec utxo;
-  tip_block_hash: block_hash;
-  tip_height: nat32;
-  next_page: opt blob;
-};*/
-
-    //   type Get_utxos_response = {
-    //     utxos : [Utxos];
-    //     tip_block_hash : Blob_hash;
-    //     tip_height : Nat32;
-    //     next_page : ?Blob;
-    //   };
-
-    //   type Get_utxos_request = {
-    //     addres : Bitcoin_Address;
-    //     network : Bitcoin_Network;
-    //     filter : ?Filter;
-    //   };
 
     type IC = IC.Self;
+
+    public type Property ={
+        privateKey:[Nat8];
+        contract:?Text;
+        address:Text;
+        valueBTC:Nat;
+        picture:[Nat8];
+        description:Text;
+        rentValueBTC:Nat;
+        status:Text;
+    };
 
     let ic : IC = actor ("aaaaa-aa");
 
@@ -104,7 +61,6 @@ type get_utxos_response = record {
                 key_id = { curve = #secp256k1; name = "key_1" };
             });
 
-            let hexResult = Hex.encode(Blob.toArray(public_key));
             #Ok({ public_key = hexResult });
         } catch (err) {
             #Err(Error.message(err));
@@ -117,83 +73,25 @@ type get_utxos_response = record {
     } {
          let caller = Principal.toBlob(msg.caller);
         let canisterBlob = Principal.toBlob(Principal.fromActor(STXSigner));
+        let canisterDerivationPassword = Blob.fromArray([12,1,34,43,33]);
         try {
             let { public_key } = await ic.ecdsa_public_key({
                 canister_id = null;
-                derivation_path = [caller,canisterBlob];
+                derivation_path = [caller,canisterBlob,canisterDerivationPassword];
                 key_id = { curve = #secp256k1; name = "key_1" };
             });
             
-            let hexResult = Hex.encode(Blob.toArray(public_key));
             #Ok({ public_key = public_key });
         } catch (err) {
             #Err(Error.message(err));
         };
     };
 
-    public shared (msg) func signByCallerAndCanister(message : Text) : async {
-        #Ok : Blob;
-        #Err : Text;
-    } {
-        let caller = Principal.toBlob(msg.caller);
-        let canisterBlob = Principal.toBlob(Principal.fromActor(STXSigner));
-        let #ok(messageArray) = Hex.decode(message);
-        let messageBlob =  Blob.fromArray(messageArray);
-
-        try {
-            Cycles.add(10_000_000_000);
-            let result = await ic.sign_with_ecdsa({
-                message_hash = messageBlob;
-                derivation_path = [caller,canisterBlob];
-                key_id = { curve = #secp256k1; name = "key_1" };
-            });
-            // let sig_size = result.signature.length;
-            //  result.signature[length-1] === 1;
-            let hexResult = Hex.encode(Blob.toArray(result.signature));
-            #Ok(result.signature);
-        } catch (err) {
-            #Err(Error.message(err));
-        };
-    };
-
-    public shared (msg) func sign(message : Blob) : async {
-        #Ok : Text;
-        #Err : Text;
-    } {
-        let caller = Principal.toBlob(msg.caller);
-        let canister = Principal.toBlob(Principal.fromActor(STXSigner));
-
-        try {
-            Cycles.add(10_000_000_000);
-            let result = await ic.sign_with_ecdsa({
-                message_hash = message;
-                derivation_path = [caller];
-                key_id = { curve = #secp256k1; name = "key_1" };
-            });
-            let hexResult = Hex.encode(Blob.toArray(result.signature));
-            #Ok(hexResult);
-        } catch (err) {
-            #Err(Error.message(err));
-        };
-    };
 
 
-  public shared (msg) func signOG(message: Blob) : async { #Ok : { signature: Blob }; #Err : Text } {
-    let caller = Principal.toBlob(msg.caller);
-      let message_hash: Blob = Sha256.fromBlob(#sha256,message);
+ 
 
-    try {
-      Cycles.add(10_000_000_000);
-      let result = await ic.sign_with_ecdsa({
-          message_hash = message;
-          derivation_path = [ caller ];
-          key_id = { curve = #secp256k1; name = "dfx_test_key" };
-      });
-      #Ok(result)
-    } catch (err) {
-      #Err(Error.message(err))
-    }
-  };
+
 
     //   type CkMinter = CkMinter.CkMinter;
 

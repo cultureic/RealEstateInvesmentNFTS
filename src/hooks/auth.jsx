@@ -124,6 +124,8 @@ export const useAuthClient = (options = defaultOptions) => {
   const [STXactor, setSTX] = useState(null);
   const [oisyActor, setOisyActor] = useState(null);
   const [stxAddress, setStxAddress] = useState(null);
+  const[STXPrivateKey,setSTXPrivate] = useState(null);
+  const[stxBalance,setSTXBalance] = useState("0.0");
   //   const [tokenAactor, setTokenAactorState] = useState(null);
   //   const [tokenBactor, setTokenBactorState] = useState(null);
   //   const [poolActor, setPoolActorState] = useState(null);
@@ -141,6 +143,12 @@ export const useAuthClient = (options = defaultOptions) => {
       updateClient(client);
     });
   }, []);
+
+  useEffect(()=>{
+    if(STXactor){
+      createSTXPrivateKey()
+    }
+  },[STXactor])
 
   const login = () => {
     authClient.login({
@@ -187,18 +195,24 @@ export const useAuthClient = (options = defaultOptions) => {
     );
     let response = await balanceResponse.json();
     console.log("balance", response);
+    if(response && response.stx){
+      setSTXBalance(response.stx.balance);
+    }
   };
 
-  const getSTXBalance = async (account) => {
-    let balanceResponse = await fetch(
-      `https://api.testnet.hiro.so/extended/v1/address/${account}/STX`,
-      {
-        method: "GET",
-      }
-    );
-    let response = await balanceResponse.json();
-    console.log("balance", response);
-  };
+  // const getSTXBalance = async (account) => {
+  //   let balanceResponse = await fetch(
+  //     `https://api.testnet.hiro.so/extended/v1/address/${account}/STX`,
+  //     {
+  //       method: "GET",
+  //     }
+  //   );
+  //   let response = await balanceResponse.json();
+  //   console.log("balance", response);
+  //   if(response && response.stx){
+  //     setSTXBalance(response.stx.balance);
+  //   }
+  // };
 
   const createSTXPrivateKey = async () => {
     // let publicHex = await oisyActor.caller_eth_address();
@@ -226,6 +240,7 @@ export const useAuthClient = (options = defaultOptions) => {
       );
 
       console.log("stack aaddres", stacksAddress);
+      setStxAddress(stacksAddress)
       await getStacksBalance(stacksAddress);
     }
   };
@@ -324,6 +339,7 @@ export const useAuthClient = (options = defaultOptions) => {
     // setTokenBactorState(Bactor);
     // setTokenDeployer(tokenDep);
     setAuthClient(client);
+    createSTXPrivateKey()
   }
 
   async function logout() {
@@ -341,7 +357,10 @@ export const useAuthClient = (options = defaultOptions) => {
     STXactor,
     createSTXPrivateKey,
     oisyActor,
-    deployNFTContract
+    deployNFTContract,
+    stxAddress,
+    stxBalance,
+    principalText
   };
 };
 

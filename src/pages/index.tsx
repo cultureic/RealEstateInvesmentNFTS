@@ -6,20 +6,19 @@ import type { FC } from "react";
 import Chart from "react-apexcharts";
 import NavbarSidebarLayout from "../layouts/navbar-sidebar";
 import { useAuth } from "../hooks/auth";
+import MyForm from "../components/propertyForm";
+
+import WalletInfoPage from "../components/wallet";
+
+
+
 
 const DashboardPage: FC = function () {
   const{login} = useAuth();
   return (
     <NavbarSidebarLayout login={login}>
       <div className="px-4 pt-6">
-        <SalesThisWeek />
-        <div className="my-6">
-          <LatestTransactions />
-        </div>
-        <LatestCustomers />
-        <div className="my-6">
-          <AcquisitionOverview />
-        </div>
+        <WalletInfoPage/>
       </div>
     </NavbarSidebarLayout>
   );

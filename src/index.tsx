@@ -13,6 +13,7 @@ import SignUpPage from "./pages/authentication/sign-up";
 import EcommerceProductsPage from "./pages/e-commerce/products";
 import UserListPage from "./pages/users/list";
 import {AuthProvider} from  "./hooks/auth";
+import CreateProperty from "./pages/create-property/CreateProperty";
 
 const container = document.getElementById("root");
 
@@ -29,11 +30,9 @@ root.render(
       <AuthProvider>
         <Routes>
           <Route path="/" element={<DashboardPage />} index />
-          <Route path="/authentication/sign-in" element={<SignInPage />} />
-          <Route path="/authentication/sign-up" element={<SignUpPage />} />
           <Route
-            path="/e-commerce/products"
-            element={<EcommerceProductsPage />}
+            path="/create-property"
+            element={<CreateProperty />}
           />
           <Route path="/users/list" element={<UserListPage />} />
         </Routes>
