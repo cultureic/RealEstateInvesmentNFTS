@@ -14,6 +14,7 @@ import EcommerceProductsPage from "./pages/e-commerce/products";
 import UserListPage from "./pages/users/list";
 import {AuthProvider} from  "./hooks/auth";
 import CreateProperty from "./pages/create-property/CreateProperty";
+import Properties from "./pages/my-properties/Properties";
 
 const container = document.getElementById("root");
 
@@ -35,6 +36,7 @@ root.render(
             element={<CreateProperty />}
           />
           <Route path="/users/list" element={<UserListPage />} />
+          <Route path="/properties" element={<Properties/>} />
         </Routes>
         </AuthProvider>
       </BrowserRouter>

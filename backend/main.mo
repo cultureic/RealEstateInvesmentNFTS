@@ -46,6 +46,7 @@ actor STXSigner {
         rentValueBTC : Nat;
         status : Text;
         owner : Principal;
+        stxWallet : ?Text;
     };
 
     public type PropertyRequest = {
@@ -77,15 +78,16 @@ actor STXSigner {
             rentValueBTC = newPropertyRequest.rentValueBTC;
             status = newPropertyRequest.status;
             owner = msg.caller;
+            stxWallet = null;
         };
         registeredProperties.put(Nat.toText(newId), newProperty);
         return newId;
     };
 
-    public shared (msg) func crearPropertyWallet(id : Nat) :  async {
-        #Ok : Nat;
+    public shared (msg) func crearPropertyWallet(id : Nat) : async {
+        #Ok : Blob;
         #Err : Text;
-    }{
+    } {
         try {
             let caller = Principal.toBlob(msg.caller);
             let porpertyHash = await Random.blob();
@@ -98,9 +100,46 @@ actor STXSigner {
             });
             switch (registeredProperties.get(Nat.toText(id))) {
                 case (?property) {
+                    if (msg.caller == property.owner) {
+                        let updateProperty : Property = {
+                            id = id;
+                            privateKey = ?Blob.toArray(public_key);
+                            contract = property.contract;
+                            address = property.address;
+                            valueBTC = property.valueBTC;
+                            rentValueBTC = property.rentValueBTC;
+                            status = property.status;
+                            owner = property.owner;
+                            picture = property.picture;
+                            description = property.description;
+                            stxWallet = property.stxWallet;
+                        };
+                        registeredProperties.put(Nat.toText(id), updateProperty);
+                        return #Ok(public_key);
+                    } else {
+                        return #Err("not the property owwneer");
+                    };
+                };
+                case (null) {
+                    return #Err("property doesnt exist");
+                };
+            };
+        } catch (err) {
+            #Err(Error.message(err));
+        };
+    };
+
+    public shared (msg) func setStxPropertyWallet(id : Nat, wallet : Text) : async {
+        #Ok : Text;
+        #Err : Text;
+    } {
+
+        switch (registeredProperties.get(Nat.toText(id))) {
+            case (?property) {
+                if (msg.caller == property.owner) {
                     let updateProperty : Property = {
                         id = id;
-                        privateKey = ?Blob.toArray(public_key);
+                        privateKey = property.privateKey;
                         contract = property.contract;
                         address = property.address;
                         valueBTC = property.valueBTC;
@@ -109,17 +148,51 @@ actor STXSigner {
                         owner = property.owner;
                         picture = property.picture;
                         description = property.description;
+                        stxWallet = ?wallet;
                     };
                     registeredProperties.put(Nat.toText(id), updateProperty);
-                    return #Ok(id);
-                };
-                case (null) {
-                    return #Err("property doesnt exist");
+                    return #Ok(wallet);
+                } else {
+                    return #Err("not the property owwneer");
                 };
             };
-            #Ok(0);
-        } catch (err) {
-            #Err(Error.message(err));
+            case (null) {
+                return #Err("property doesnt exist");
+            };
+        };
+    };
+
+
+        public shared (msg) func propertyDeployed(id : Nat, contract : Text) : async {
+        #Ok : Text;
+        #Err : Text;
+    } {
+
+        switch (registeredProperties.get(Nat.toText(id))) {
+            case (?property) {
+                if (msg.caller == property.owner) {
+                    let updateProperty : Property = {
+                        id = id;
+                        privateKey = property.privateKey;
+                        contract = ?contract;
+                        address = property.address;
+                        valueBTC = property.valueBTC;
+                        rentValueBTC = property.rentValueBTC;
+                        status = "deployed";
+                        owner = property.owner;
+                        picture = property.picture;
+                        description = property.description;
+                        stxWallet = property.stxWallet;
+                    };
+                    registeredProperties.put(Nat.toText(id), updateProperty);
+                    return #Ok(contract);
+                } else {
+                    return #Err("not the property owwneer");
+                };
+            };
+            case (null) {
+                return #Err("property doesnt exist");
+            };
         };
     };
 
@@ -141,6 +214,16 @@ actor STXSigner {
         } catch (err) {
             #Err(Error.message(err));
         };
+    };
+
+    public shared (msg) func getUserProperties() : async [Property] {
+    let propertyBuffer : Buffer.Buffer<Property> = Buffer.Buffer<Property>(0);
+        for (property in registeredProperties.vals()) {
+            if (property.owner == msg.caller) {
+                propertyBuffer.add(property);
+            };
+        };
+        return Buffer.toArray(propertyBuffer);
     };
 
     //   type CkMinter = CkMinter.CkMinter;

@@ -68,6 +68,17 @@ const ExampleSidebar: FC = function () {
                 Create property
               </Sidebar.Item>
               <Sidebar.Item
+                href="/properties"
+                icon={HiDatabase}
+                className={
+                  "/users/list" === currentPage
+                    ? "bg-gray-100 dark:bg-gray-700"
+                    : ""
+                }
+              >
+                My Properties
+              </Sidebar.Item>
+              <Sidebar.Item
                 href="/users/list"
                 icon={HiDatabase}
                 className={
@@ -82,9 +93,6 @@ const ExampleSidebar: FC = function () {
               login()
             }} icon={HiLogin}>
                 Sign in
-              </Sidebar.Item>}
-              { isAuth &&  <Sidebar.Item onClick={createSTXPrivateKey} icon={HiLogin}>
-                make STX key
               </Sidebar.Item>}
               { isAuth &&  <Sidebar.Item onClick={deployNFTContract} icon={HiLogin}>
                 deploy STX NFT contract

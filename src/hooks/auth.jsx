@@ -15,24 +15,30 @@ import {
   AnchorMode,
   makeContractDeploy,
   broadcastTransaction,
+  makeContractCall,
+  callReadOnlyFunction,
+  bufferCVFromString
 } from "@stacks/transactions";
+import {noneCV} from "@stacks/transactions/dist/clarity/types/optionalCV.js";
+
 import { createActor, canisterId } from "../declarations/STX/index.js";
 import { createOisyFactoryActor } from "../ic/oisywallet/index.js";
 import { Buffer } from "buffer";
 import { StacksTestnet, StacksMainnet } from "@stacks/network";
 
-let nftContractString = `;; This contract implements the SIP-009 community-standard Non-Fungible Token trait
+const buildNFTContrat = (options) => {
+  return `;; This contract implements the SIP-009 community-standard Non-Fungible Token trait
 (impl-trait 'ST1EM1QREZ5DMC93HJB4BYFZWF8V4EV0EZW8BWYJZ.acludo-nft.nft-trait)
 
 ;; Define the NFT's name
-(define-non-fungible-token Your-NFT-Name uint)
+(define-non-fungible-token ${options.name} uint)
 
 ;; Keep track of the last minted token ID
 (define-data-var last-token-id uint u0)
 
 ;; Define constants
 (define-constant CONTRACT_OWNER tx-sender)
-(define-constant COLLECTION_LIMIT u1000) ;; Limit to series of 1000
+(define-constant COLLECTION_LIMIT u${options.limit}) ;; Limit to series of 1000
 
 (define-constant ERR_OWNER_ONLY (err u100))
 (define-constant ERR_NOT_TOKEN_OWNER (err u101))
@@ -52,7 +58,7 @@ let nftContractString = `;; This contract implements the SIP-009 community-stand
 
 ;; SIP-009 function: Get the owner of a given token
 (define-read-only (get-owner (token-id uint))
-  (ok (nft-get-owner? Your-NFT-Name token-id))
+  (ok (nft-get-owner? ${options.name} token-id))
 )
 
 ;; SIP-009 function: Transfer NFT token to another owner.
@@ -60,7 +66,7 @@ let nftContractString = `;; This contract implements the SIP-009 community-stand
   (begin
     ;; #[filter(sender)]
     (asserts! (is-eq tx-sender sender) ERR_NOT_TOKEN_OWNER)
-    (nft-transfer? Your-NFT-Name token-id sender recipient)
+    (nft-transfer? ${options.name} token-id sender recipient)
   )
 )
 
@@ -73,7 +79,7 @@ let nftContractString = `;; This contract implements the SIP-009 community-stand
     ;; Only the contract owner can mint.
     (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_OWNER_ONLY)
     ;; Mint the NFT and send it to the given recipient.
-    (try! (nft-mint? Your-NFT-Name token-id recipient))
+    (try! (nft-mint? ${options.name} token-id recipient))
 
     ;; Update the last minted token ID.
     (var-set last-token-id token-id)
@@ -81,6 +87,7 @@ let nftContractString = `;; This contract implements the SIP-009 community-stand
     (ok token-id)
   )
 )`;
+};
 
 // @ts-ignore
 window.Buffer = Buffer;
@@ -125,6 +132,7 @@ export const useAuthClient = (options = defaultOptions) => {
   const [stxAddress, setStxAddress] = useState(null);
   const [STXPrivateKey, setSTXPrivate] = useState(null);
   const [stxBalance, setSTXBalance] = useState("0.0");
+  const [userProperties, setUserProperties] = useState([]);
 
   useEffect(() => {
     // Initialize AuthClient
@@ -137,6 +145,7 @@ export const useAuthClient = (options = defaultOptions) => {
   useEffect(() => {
     if (STXactor) {
       createSTXPrivateKey();
+      getUserProperties();
     }
   }, [STXactor]);
 
@@ -150,8 +159,57 @@ export const useAuthClient = (options = defaultOptions) => {
     });
   };
 
-  const createProperty = async (property) => {
+  const getNFTS = async (entity) => {
+    console.log("getting NFTS");
 
+    const contractAddress = entity.stxWallet[0];
+    const contractName =  entity.address.replace(/ /g, "_")
+    const functionName = "get-last-token-id";
+  //  const buffer = bufferCVFromString("");
+    const network = new StacksTestnet();
+    const senderAddress = stxAddress;
+
+    const options = {
+      contractAddress,
+      contractName,
+      functionName,
+      functionArgs: [noneCV()],
+      network,
+      senderAddress,
+    };
+
+    const result = await callReadOnlyFunction(options);
+    console.log("looking at result form read Only function",result)
+    // const network = new StacksTestnet();
+    // let publicArray = entity.privateKey[0];
+    // publicArray[32] = 1;
+    // let hex = Buffer.from(publicArray).toString("hex");
+    // const txOptions = {
+    //   contractAddress: entity.stxWallet[0],
+    //   contractName: entity.address.replace(/ /g, "_"),
+    //   functionName: "get-last-token-id",
+    //   functionArgs: [],
+    //   senderKey: hex,
+    //   validateWithAbi: true,
+    //   network,
+    //   postConditions: [],
+    //   anchorMode: AnchorMode.Any,
+    // };
+
+    // const transaction = await makeContractCall(txOptions);
+
+    // console.log("getNFT",transaction);
+    // const broadcastResponse = await broadcastTransaction(transaction, network);
+    // const txId = broadcastResponse.txid;
+  };
+
+  const getUserProperties = async () => {
+    let properties = await STXactor.getUserProperties();
+    console.log("getUserProperties", properties);
+    setUserProperties(properties);
+  };
+
+  const createProperty = async (property) => {
     let propertyRequest = {
       privateKey: [],
       contract: [],
@@ -167,22 +225,37 @@ export const useAuthClient = (options = defaultOptions) => {
     console.log("response", response);
     let id = Number(response);
     let responsePrivateKey = await STXactor.crearPropertyWallet(id);
+    let publicArray = responsePrivateKey.Ok;
+    publicArray[32] = 1;
+    let hex = Buffer.from(publicArray).toString("hex");
     console.log("response private key", responsePrivateKey);
+    const stacksAddress = getAddressFromPrivateKey(
+      hex,
+      TransactionVersion.Testnet // remove for Mainnet addresses
+    );
+    let settingStxAddress = await STXactor.setStxPropertyWallet(
+      id,
+      stacksAddress
+    );
+    console.log("response to setting stxAddres", settingStxAddress);
+    await getUserProperties();
+    d;
     ///todo create the STX wallet and register in the state to avoid privakey leakage. only owner of the property can call private key!
   };
 
-  const deployNFTContract = async () => {
-    let publicHex = await STXactor.canister_and_caller_pub_key();
-    console.log("public hex", publicHex);
-    let publicArray = publicHex.Ok.public_key;
+  const deployNFTContract = async (entity) => {
+    let publicArray = entity.privateKey[0];
     publicArray[32] = 1;
     let hex = Buffer.from(publicArray).toString("hex");
     // for mainnet, use `StacksMainnet()`
     const network = new StacksTestnet();
 
     const txOptions = {
-      contractName: "contract_name",
-      codeBody: nftContractString,
+      contractName: entity.address.replace(/ /g, "_"),
+      codeBody: buildNFTContrat({
+        name: `NFT-Property-${entity.id.toString()}`,
+        limit: "1000",
+      }),
       senderKey: hex,
       network,
       anchorMode: AnchorMode.Any,
@@ -194,6 +267,18 @@ export const useAuthClient = (options = defaultOptions) => {
     console.log("BROADCAST TX", broadcastResponse);
     const txId = broadcastResponse.txid;
     console.log("Brodcast id", txId);
+    if (
+      transaction &&
+      transaction.payload &&
+      transaction.payload.codeBody &&
+      transaction.payload.payloadType === 6
+    ) {
+      let deployedStatys = await STXactor.propertyDeployed(
+        entity.id,
+        entity.stxWallet[0] + "." + entity.address.replace(/ /g, "_")
+      );
+      console.log("deployed status", deployedStatys);
+    }
   };
 
   const getStacksBalance = async (account) => {
@@ -210,10 +295,7 @@ export const useAuthClient = (options = defaultOptions) => {
     }
   };
 
-
-
   const createSTXPrivateKey = async () => {
-
     let publicHex = await STXactor.canister_and_caller_pub_key();
     console.log("public hex", publicHex);
     let publicArray = publicHex.Ok.public_key;
@@ -236,7 +318,6 @@ export const useAuthClient = (options = defaultOptions) => {
       await getStacksBalance(stacksAddress);
     }
   };
-
 
   async function updateClient(client) {
     const isAuthenticated = await client.isAuthenticated();
@@ -289,6 +370,8 @@ export const useAuthClient = (options = defaultOptions) => {
     stxBalance,
     principalText,
     createProperty,
+    userProperties,
+    getNFTS,
   };
 };
 

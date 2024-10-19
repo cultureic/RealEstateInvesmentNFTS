@@ -9,6 +9,20 @@ type PropertyRequest =
    status: text;
    valueBTC: nat;
  };
+type Property = 
+ record {
+   address: text;
+   contract: opt text;
+   description: text;
+   id: nat;
+   owner: principal;
+   picture: vec nat8;
+   privateKey: opt vec nat8;
+   rentValueBTC: nat;
+   status: text;
+   stxWallet: opt text;
+   valueBTC: nat;
+ };
 service : {
   canister_and_caller_pub_key: () ->
    (variant {
@@ -17,7 +31,16 @@ service : {
     });
   crearPropertyWallet: (nat) -> (variant {
                                    Err: text;
-                                   Ok: nat;
+                                   Ok: blob;
                                  });
   createProperty: (PropertyRequest) -> (nat);
+  getUserProperties: () -> (vec Property);
+  propertyDeployed: (nat, text) -> (variant {
+                                      Err: text;
+                                      Ok: text;
+                                    });
+  setStxPropertyWallet: (nat, text) -> (variant {
+                                          Err: text;
+                                          Ok: text;
+                                        });
 }
