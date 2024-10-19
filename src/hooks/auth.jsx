@@ -168,6 +168,7 @@ export const useAuthClient = (options = defaultOptions) => {
     let id = Number(response);
     let responsePrivateKey = await STXactor.crearPropertyWallet(id);
     console.log("response private key", responsePrivateKey);
+    ///todo create the STX wallet and register in the state to avoid privakey leakage. only owner of the property can call private key!
   };
 
   const deployNFTContract = async () => {
