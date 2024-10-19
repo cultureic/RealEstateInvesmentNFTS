@@ -12,7 +12,8 @@ import Nat32 "mo:base/Nat32";
 import Nat64 "mo:base/Nat64";
 import Array "mo:base/Array";
 import Sha256 "mo:sha2/Sha256";
-
+import TrieMap "mo:base/TrieMap";
+import Random "mo:base/Random";
 
 //gives error in vscode but should still work
 
@@ -32,36 +33,91 @@ import Hex "./Hex";
 
 actor STXSigner {
 
-
-
     type IC = IC.Self;
 
-    public type Property ={
-        privateKey:[Nat8];
-        contract:?Text;
-        address:Text;
-        valueBTC:Nat;
-        picture:[Nat8];
-        description:Text;
-        rentValueBTC:Nat;
-        status:Text;
+    public type Property = {
+        id : Nat;
+        privateKey : ?[Nat8];
+        contract : ?Text;
+        address : Text;
+        valueBTC : Nat;
+        picture : [Nat8];
+        description : Text;
+        rentValueBTC : Nat;
+        status : Text;
+        owner : Principal;
     };
+
+    public type PropertyRequest = {
+        privateKey : [Nat8];
+        contract : ?Text;
+        address : Text;
+        valueBTC : Nat;
+        picture : [Nat8];
+        description : Text;
+        rentValueBTC : Nat;
+        status : Text;
+    };
+
+    let registeredProperties = TrieMap.TrieMap<Text, Property>(Text.equal, Text.hash);
 
     let ic : IC = actor ("aaaaa-aa");
 
-    public shared (msg) func public_key() : async {
-        #Ok : { public_key : Text };
+    public shared (msg) func createProperty(newPropertyRequest : PropertyRequest) : async Nat {
+
+        let newId = registeredProperties.size();
+        let newProperty : Property = {
+            id = newId;
+            privateKey = ?newPropertyRequest.privateKey;
+            contract = newPropertyRequest.contract;
+            address = newPropertyRequest.address;
+            valueBTC = newPropertyRequest.valueBTC;
+            picture = newPropertyRequest.picture;
+            description = newPropertyRequest.description;
+            rentValueBTC = newPropertyRequest.rentValueBTC;
+            status = newPropertyRequest.status;
+            owner = msg.caller;
+        };
+        registeredProperties.put(Nat.toText(newId), newProperty);
+        return newId;
+    };
+
+    public shared (msg) func crearPropertyWallet(id : Nat) :  async {
+        #Ok : Nat;
         #Err : Text;
-    } {
-        let caller = Principal.toBlob(msg.caller);
+    }{
         try {
+            let caller = Principal.toBlob(msg.caller);
+            let porpertyHash = await Random.blob();
+            let canisterBlob = Principal.toBlob(Principal.fromActor(STXSigner));
+            let canisterDerivationPassword = Blob.fromArray([12, 1, 34, 43, 33]);
             let { public_key } = await ic.ecdsa_public_key({
                 canister_id = null;
-                derivation_path = [caller];
+                derivation_path = [caller, canisterBlob, canisterDerivationPassword, porpertyHash];
                 key_id = { curve = #secp256k1; name = "key_1" };
             });
-
-            #Ok({ public_key = hexResult });
+            switch (registeredProperties.get(Nat.toText(id))) {
+                case (?property) {
+                    let updateProperty : Property = {
+                        id = id;
+                        privateKey = ?Blob.toArray(public_key);
+                        contract = property.contract;
+                        address = property.address;
+                        valueBTC = property.valueBTC;
+                        rentValueBTC = property.rentValueBTC;
+                        status = property.status;
+                        owner = property.owner;
+                        picture = property.picture;
+                        description = property.description;
+                    };
+                    registeredProperties.put(Nat.toText(id), updateProperty);
+                    return #Ok(id);
+                };
+                case (null) {
+                    return #Err("property doesnt exist");
+                };
+            };
+            #Ok(0);
         } catch (err) {
             #Err(Error.message(err));
         };
@@ -71,27 +127,21 @@ actor STXSigner {
         #Ok : { public_key : Blob };
         #Err : Text;
     } {
-         let caller = Principal.toBlob(msg.caller);
+        let caller = Principal.toBlob(msg.caller);
         let canisterBlob = Principal.toBlob(Principal.fromActor(STXSigner));
-        let canisterDerivationPassword = Blob.fromArray([12,1,34,43,33]);
+        let canisterDerivationPassword = Blob.fromArray([12, 1, 34, 43, 33]);
         try {
             let { public_key } = await ic.ecdsa_public_key({
                 canister_id = null;
-                derivation_path = [caller,canisterBlob,canisterDerivationPassword];
+                derivation_path = [caller, canisterBlob, canisterDerivationPassword];
                 key_id = { curve = #secp256k1; name = "key_1" };
             });
-            
+
             #Ok({ public_key = public_key });
         } catch (err) {
             #Err(Error.message(err));
         };
     };
-
-
-
- 
-
-
 
     //   type CkMinter = CkMinter.CkMinter;
 

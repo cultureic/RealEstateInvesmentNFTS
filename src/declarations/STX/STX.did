@@ -1,23 +1,23 @@
+type PropertyRequest = 
+ record {
+   address: text;
+   contract: opt text;
+   description: text;
+   picture: vec nat8;
+   privateKey: vec nat8;
+   rentValueBTC: nat;
+   status: text;
+   valueBTC: nat;
+ };
 service : {
   canister_and_caller_pub_key: () ->
    (variant {
       Err: text;
       Ok: record {public_key: blob;};
     });
-  public_key: () -> (variant {
-                       Err: text;
-                       Ok: record {public_key: text;};
-                     });
-  sign: (blob) -> (variant {
-                     Err: text;
-                     Ok: text;
-                   });
-  signByCallerAndCanister: (text) -> (variant {
-                                        Err: text;
-                                        Ok: blob;
-                                      });
-  signOG: (blob) -> (variant {
-                       Err: text;
-                       Ok: record {signature: blob;};
-                     });
+  crearPropertyWallet: (nat) -> (variant {
+                                   Err: text;
+                                   Ok: nat;
+                                 });
+  createProperty: (PropertyRequest) -> (nat);
 }

@@ -160,6 +160,33 @@ export const useAuthClient = (options = defaultOptions) => {
     });
   };
 
+
+  const createProperty = async (property) =>{
+
+  //   public type PropertyRequest = {
+  //     privateKey : [Nat8];
+  //     contract : ?Text;
+  //     address : Text;
+  //     valueBTC : Nat;
+  //     picture : [Nat8];
+  //     description : Text;
+  //     rentValueBTC : Nat;
+  //     status : Text;
+  // };
+
+  // valueBTC: 0,
+  // picture: null,
+  // description: '',
+  // address: '', // Initialize the new field
+  // rentBTC:0
+
+  let propertyRequest = {privateKey:[],contract:[],address:property.address,description:property.description,valueBTC:property.valueBTC,rentValueBTC:property.rentBTC,picture:property.picture,status:"notdeployed"};
+  
+  let  response = await STXactor.createProperty(propertyRequest);
+  console.log("response",response);
+
+  };
+
   const deployNFTContract = async () => {
     let publicHex = await STXactor.canister_and_caller_pub_key();
     console.log("public hex", publicHex);
@@ -360,7 +387,8 @@ export const useAuthClient = (options = defaultOptions) => {
     deployNFTContract,
     stxAddress,
     stxBalance,
-    principalText
+    principalText,
+    createProperty
   };
 };
 

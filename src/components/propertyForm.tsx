@@ -1,16 +1,18 @@
 //@ts-nocheck
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { TextInput, Textarea, FileInput, Button } from 'flowbite-react';
+import { useAuth } from '../hooks/auth';
 
 interface FormValues {
   valueBTC: number;
   picture: Uint8Array | null;
   description: string;
   address: string; // New address field
-  rentBTC: string;
+  rentBTC: number;
 }
 
 const MyForm: React.FC = () => {
+    const{createProperty} = useAuth();
   const [formValues, setFormValues] = useState<FormValues>({
     valueBTC: 0,
     picture: null,
@@ -25,7 +27,7 @@ const MyForm: React.FC = () => {
     const { id, value } = e.target;
     setFormValues({
       ...formValues,
-      [id]: id === 'valueBTC' ? Number(value) : value,
+      [id]: (id === 'valueBTC' || id === "rentBTC")  ? Number(value) : value,
     });
   };
 
@@ -47,6 +49,7 @@ const MyForm: React.FC = () => {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     console.log('Submitted data:', formValues);
+    createProperty(formValues)
   };
 
   return (
@@ -67,7 +70,7 @@ const MyForm: React.FC = () => {
       <h1 className="text-xl font-semibold dark:text-white">Enter Rent Bitcoin Value (in Sats)</h1>
       <div>
         <TextInput
-          id="valueBTC"
+          id="rentBTC"
           type="number"
           required
           value={formValues.rentBTC}

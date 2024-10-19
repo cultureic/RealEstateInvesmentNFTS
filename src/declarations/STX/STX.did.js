@@ -1,4 +1,14 @@
 export const idlFactory = ({ IDL }) => {
+  const PropertyRequest = IDL.Record({
+    'status' : IDL.Text,
+    'rentValueBTC' : IDL.Nat,
+    'contract' : IDL.Opt(IDL.Text),
+    'description' : IDL.Text,
+    'picture' : IDL.Vec(IDL.Nat8),
+    'privateKey' : IDL.Vec(IDL.Nat8),
+    'address' : IDL.Text,
+    'valueBTC' : IDL.Nat,
+  });
   return IDL.Service({
     'canister_and_caller_pub_key' : IDL.Func(
         [],
@@ -10,36 +20,12 @@ export const idlFactory = ({ IDL }) => {
         ],
         [],
       ),
-    'public_key' : IDL.Func(
-        [],
-        [
-          IDL.Variant({
-            'Ok' : IDL.Record({ 'public_key' : IDL.Text }),
-            'Err' : IDL.Text,
-          }),
-        ],
+    'crearPropertyWallet' : IDL.Func(
+        [IDL.Nat],
+        [IDL.Variant({ 'Ok' : IDL.Nat, 'Err' : IDL.Text })],
         [],
       ),
-    'sign' : IDL.Func(
-        [IDL.Vec(IDL.Nat8)],
-        [IDL.Variant({ 'Ok' : IDL.Text, 'Err' : IDL.Text })],
-        [],
-      ),
-    'signByCallerAndCanister' : IDL.Func(
-        [IDL.Text],
-        [IDL.Variant({ 'Ok' : IDL.Vec(IDL.Nat8), 'Err' : IDL.Text })],
-        [],
-      ),
-    'signOG' : IDL.Func(
-        [IDL.Vec(IDL.Nat8)],
-        [
-          IDL.Variant({
-            'Ok' : IDL.Record({ 'signature' : IDL.Vec(IDL.Nat8) }),
-            'Err' : IDL.Text,
-          }),
-        ],
-        [],
-      ),
+    'createProperty' : IDL.Func([PropertyRequest], [IDL.Nat], []),
   });
 };
 export const init = ({ IDL }) => { return []; };
