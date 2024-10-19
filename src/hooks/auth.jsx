@@ -14,13 +14,12 @@ import {
   privateKeyToString,
   AnchorMode,
   makeContractDeploy,
-  broadcastTransaction
+  broadcastTransaction,
 } from "@stacks/transactions";
 import { createActor, canisterId } from "../declarations/STX/index.js";
 import { createOisyFactoryActor } from "../ic/oisywallet/index.js";
 import { Buffer } from "buffer";
 import { StacksTestnet, StacksMainnet } from "@stacks/network";
-
 
 let nftContractString = `;; This contract implements the SIP-009 community-standard Non-Fungible Token trait
 (impl-trait 'ST1EM1QREZ5DMC93HJB4BYFZWF8V4EV0EZW8BWYJZ.acludo-nft.nft-trait)
@@ -81,7 +80,7 @@ let nftContractString = `;; This contract implements the SIP-009 community-stand
     ;; Return a success status and the newly minted NFT ID.
     (ok token-id)
   )
-)`
+)`;
 
 // @ts-ignore
 window.Buffer = Buffer;
@@ -124,17 +123,8 @@ export const useAuthClient = (options = defaultOptions) => {
   const [STXactor, setSTX] = useState(null);
   const [oisyActor, setOisyActor] = useState(null);
   const [stxAddress, setStxAddress] = useState(null);
-  const[STXPrivateKey,setSTXPrivate] = useState(null);
-  const[stxBalance,setSTXBalance] = useState("0.0");
-  //   const [tokenAactor, setTokenAactorState] = useState(null);
-  //   const [tokenBactor, setTokenBactorState] = useState(null);
-  //   const [poolActor, setPoolActorState] = useState(null);
-  //   const [swapfactory, setSwapFactoryState] = useState(null);
-  //   const [tokenDeployer, setTokenDeployer] = useState(null);
-  //   const [shitToken, setShitToken] = useState(null);
-  //   const [shitListener, setShitListener] = useState(
-  //     "nqo5b-6qaaa-aaaap-ahauq-cai"
-  //   );
+  const [STXPrivateKey, setSTXPrivate] = useState(null);
+  const [stxBalance, setSTXBalance] = useState("0.0");
 
   useEffect(() => {
     // Initialize AuthClient
@@ -144,11 +134,11 @@ export const useAuthClient = (options = defaultOptions) => {
     });
   }, []);
 
-  useEffect(()=>{
-    if(STXactor){
-      createSTXPrivateKey()
+  useEffect(() => {
+    if (STXactor) {
+      createSTXPrivateKey();
     }
-  },[STXactor])
+  }, [STXactor]);
 
   const login = () => {
     authClient.login({
@@ -160,31 +150,24 @@ export const useAuthClient = (options = defaultOptions) => {
     });
   };
 
+  const createProperty = async (property) => {
 
-  const createProperty = async (property) =>{
+    let propertyRequest = {
+      privateKey: [],
+      contract: [],
+      address: property.address,
+      description: property.description,
+      valueBTC: property.valueBTC,
+      rentValueBTC: property.rentBTC,
+      picture: property.picture,
+      status: "notdeployed",
+    };
 
-  //   public type PropertyRequest = {
-  //     privateKey : [Nat8];
-  //     contract : ?Text;
-  //     address : Text;
-  //     valueBTC : Nat;
-  //     picture : [Nat8];
-  //     description : Text;
-  //     rentValueBTC : Nat;
-  //     status : Text;
-  // };
-
-  // valueBTC: 0,
-  // picture: null,
-  // description: '',
-  // address: '', // Initialize the new field
-  // rentBTC:0
-
-  let propertyRequest = {privateKey:[],contract:[],address:property.address,description:property.description,valueBTC:property.valueBTC,rentValueBTC:property.rentBTC,picture:property.picture,status:"notdeployed"};
-  
-  let  response = await STXactor.createProperty(propertyRequest);
-  console.log("response",response);
-
+    let response = await STXactor.createProperty(propertyRequest);
+    console.log("response", response);
+    let id = Number(response);
+    let responsePrivateKey = await STXactor.crearPropertyWallet(id);
+    console.log("response private key", responsePrivateKey);
   };
 
   const deployNFTContract = async () => {
@@ -195,7 +178,6 @@ export const useAuthClient = (options = defaultOptions) => {
     let hex = Buffer.from(publicArray).toString("hex");
     // for mainnet, use `StacksMainnet()`
     const network = new StacksTestnet();
-
 
     const txOptions = {
       contractName: "contract_name",
@@ -222,33 +204,15 @@ export const useAuthClient = (options = defaultOptions) => {
     );
     let response = await balanceResponse.json();
     console.log("balance", response);
-    if(response && response.stx){
+    if (response && response.stx) {
       setSTXBalance(response.stx.balance);
     }
   };
 
-  // const getSTXBalance = async (account) => {
-  //   let balanceResponse = await fetch(
-  //     `https://api.testnet.hiro.so/extended/v1/address/${account}/STX`,
-  //     {
-  //       method: "GET",
-  //     }
-  //   );
-  //   let response = await balanceResponse.json();
-  //   console.log("balance", response);
-  //   if(response && response.stx){
-  //     setSTXBalance(response.stx.balance);
-  //   }
-  // };
+
 
   const createSTXPrivateKey = async () => {
-    // let publicHex = await oisyActor.caller_eth_address();
-    // console.log("public hex", publicHex);
-    // const privateKey = createStacksPrivateKey(publicHex);
-    // console.log("STX private key", privateKey);
-    // const publicKey = getPublicKey(privateKey);
-    // console.log("STX publicKey", publicKey);
-    //    }
+
     let publicHex = await STXactor.canister_and_caller_pub_key();
     console.log("public hex", publicHex);
     let publicArray = publicHex.Ok.public_key;
@@ -267,45 +231,11 @@ export const useAuthClient = (options = defaultOptions) => {
       );
 
       console.log("stack aaddres", stacksAddress);
-      setStxAddress(stacksAddress)
+      setStxAddress(stacksAddress);
       await getStacksBalance(stacksAddress);
     }
   };
 
-  //   const initSwapFactory = async () => {
-  //     let factory = await createSwapFactoryActor();
-  //     setSwapFactoryState(factory);
-  //   };
-
-  //   const setShitListenerF = (shit) => {
-  //     setShitListener(shit);
-  //   };
-
-  //   const setPoolActor = (pool) => {
-  //     let poolid = pool.ok.canisterId;
-  //     let poolActor = createPoolActor(poolid, {
-  //       agentOptions: { identity },
-  //     });
-  //     setPoolActorState(poolActor);
-  //   };
-
-  //   const setTokenAactor = async (canisterId) => {
-  //     let actor = createicrc1Actor(canisterId, {
-  //       agentOption: {
-  //         identity,
-  //       },
-  //     });
-  //     setTokenAactorState(actor);
-  //   };
-
-  //   const setTokenBactor = (canisterId) => {
-  //     let actor = createicrc1Actor(canisterId, {
-  //       agentOption: {
-  //         identity,
-  //       },
-  //     });
-  //     setTokenBactorState(actor);
-  //   };
 
   async function updateClient(client) {
     const isAuthenticated = await client.isAuthenticated();
@@ -319,34 +249,6 @@ export const useAuthClient = (options = defaultOptions) => {
     console.log("principal", principal);
     let principalText = Principal.fromUint8Array(principal._arr).toText();
     console.log("principalText", principalText);
-
-    // let icpCanister = "ryjl3-tyaaa-aaaaa-aaaba-cai";
-    // console.log("creating actors");
-    // let shitTokenActor = createicrc1Actor(shitListener, {
-    //   agentOptions: {
-    //     identity,
-    //   },
-    // });
-
-    // let Aactor = createicrc1Actor(icpCanister, {
-    //   agentOptions: {
-    //     identity,
-    //   },
-    // });
-
-    // let Bactor = createicrc1Actor("nqo5b-6qaaa-aaaap-ahauq-cai", {
-    //   agentOptions: {
-    //     identity,
-    //   },
-    // });
-
-    // let tokenDep = createActor("l5q4j-wyaaa-aaaap-ab2wq-cai", {
-    //   agentOptions: {
-    //     identity,
-    //   },
-    // });
-
-    // setShitToken(shitTokenActor);
 
     let stxActor = createActor("djcrm-lqaaa-aaaaj-azulq-cai", {
       agentOptions: { identity },
@@ -362,11 +264,8 @@ export const useAuthClient = (options = defaultOptions) => {
     setPrincipalText(principalText);
     setPrincipal(principal);
     setSTX(stxActor);
-    // setTokenAactorState(Aactor);
-    // setTokenBactorState(Bactor);
-    // setTokenDeployer(tokenDep);
     setAuthClient(client);
-    createSTXPrivateKey()
+    createSTXPrivateKey();
   }
 
   async function logout() {
@@ -388,7 +287,7 @@ export const useAuthClient = (options = defaultOptions) => {
     stxAddress,
     stxBalance,
     principalText,
-    createProperty
+    createProperty,
   };
 };
 
