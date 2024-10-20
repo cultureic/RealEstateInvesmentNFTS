@@ -19,12 +19,15 @@ import {
   HiDatabase
 } from "react-icons/hi";
 import { useAuth } from "../hooks/auth";
+import { useNavigate } from "react-router-dom";
+
 
 const ExampleSidebar: FC = function () {
-  const {isAuth,login,logout } = useAuth();
+  const navigate = useNavigate(); // Initialize the useNavigate hook
+  const { isAuth, login, logout } = useAuth();
   const [currentPage, setCurrentPage] = useState("");
 
-  useEffect(()=>{},[isAuth])
+  useEffect(() => { }, [isAuth])
 
   useEffect(() => {
     const newPage = window.location.pathname;
@@ -48,16 +51,16 @@ const ExampleSidebar: FC = function () {
           <Sidebar.Items>
             <Sidebar.ItemGroup>
               <Sidebar.Item
-                href="/"
+                onClick={() => { navigate("/") }}
                 icon={HiCash}
                 className={
                   "/" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
                 }
               >
-               Wallets
+                Wallets
               </Sidebar.Item>
               <Sidebar.Item
-                href="/create-property"
+                onClick={() => { navigate("/create-property") }}
                 icon={HiDocumentAdd}
                 className={
                   "/e-commerce/products" === currentPage
@@ -68,7 +71,8 @@ const ExampleSidebar: FC = function () {
                 Create property
               </Sidebar.Item>
               <Sidebar.Item
-                href="/properties"
+                onClick={() => { navigate("/properties") }}
+
                 icon={HiDatabase}
                 className={
                   "/users/list" === currentPage
@@ -79,7 +83,8 @@ const ExampleSidebar: FC = function () {
                 My Properties
               </Sidebar.Item>
               <Sidebar.Item
-                href="/nfts"
+                onClick={() => { navigate("/nfts") }}
+
                 icon={HiDatabase}
                 className={
                   "/users/list" === currentPage
@@ -89,15 +94,15 @@ const ExampleSidebar: FC = function () {
               >
                 NFTS
               </Sidebar.Item>
-            { !isAuth &&  <Sidebar.Item onClick={()=>{
-              login()
-            }} icon={HiLogin}>
+              {!isAuth && <Sidebar.Item onClick={() => {
+                login()
+              }} icon={HiLogin}>
                 Sign in
               </Sidebar.Item>}
-              { isAuth &&  <Sidebar.Item  icon={HiLogin}
-              onClick={()=>{logout()}}
+              {isAuth && <Sidebar.Item icon={HiLogin}
+                onClick={() => { logout() }}
               >
-                Log out 
+                Log out
               </Sidebar.Item>}
             </Sidebar.ItemGroup>
           </Sidebar.Items>

@@ -60,14 +60,14 @@ actor STXSigner {
         status : Text;
     };
 
-    public type PropertyResponse ={
-        picture:[Nat8];
-        valueBTC:Nat;
-        rentValueBTC:Nat;
-        address:Text;
-        stxWallet:?Text;
-        description:Text;
-        contract:?Text;
+    public type PropertyResponse = {
+        picture : [Nat8];
+        valueBTC : Nat;
+        rentValueBTC : Nat;
+        address : Text;
+        stxWallet : ?Text;
+        description : Text;
+        contract : ?Text;
     };
 
     let registeredProperties = TrieMap.TrieMap<Text, Property>(Text.equal, Text.hash);
@@ -172,8 +172,7 @@ actor STXSigner {
         };
     };
 
-
-        public shared (msg) func propertyDeployed(id : Nat, contract : Text) : async {
+    public shared (msg) func propertyDeployed(id : Nat, contract : Text) : async {
         #Ok : Text;
         #Err : Text;
     } {
@@ -227,7 +226,7 @@ actor STXSigner {
     };
 
     public shared (msg) func getUserProperties() : async [Property] {
-    let propertyBuffer : Buffer.Buffer<Property> = Buffer.Buffer<Property>(0);
+        let propertyBuffer : Buffer.Buffer<Property> = Buffer.Buffer<Property>(0);
         for (property in registeredProperties.vals()) {
             if (property.owner == msg.caller) {
                 propertyBuffer.add(property);
@@ -236,24 +235,24 @@ actor STXSigner {
         return Buffer.toArray(propertyBuffer);
     };
 
+    public shared (msg) func getPropertyNFTData(contract : Text) : async [PropertyResponse] {
+        let propertyBuffer : Buffer.Buffer<PropertyResponse> = Buffer.Buffer<PropertyResponse>(0);
+        label eachProperty for (property in registeredProperties.vals()) {
+            let ?contractProperty = property.contract else continue  eachProperty;
 
-
-     public shared (msg) func getPropertyNFTData(contract:Text) : async [PropertyResponse] {
-    let propertyBuffer : Buffer.Buffer<PropertyResponse> = Buffer.Buffer<PropertyResponse>(0);
-        for (property in registeredProperties.vals()) {
-            let ?contractProperty = property.contract;
-            if (Text.equal(contractProperty,contract)) {
-                let propertyResponse:PropertyResponse = {
-                    address=property.address;
-                    contract=property.contract;
-                    picture=property.picture;
-                    rentValueBTC=property.rentValueBTC;
-                    stxWallet=property.stxWallet;
-                    valueBTC=property.valueBTC;
-                    description=property.description;
+            if (Text.equal(contractProperty, contract)) {
+                let propertyResponse : PropertyResponse = {
+                    address = property.address;
+                    contract = property.contract;
+                    picture = property.picture;
+                    rentValueBTC = property.rentValueBTC;
+                    stxWallet = property.stxWallet;
+                    valueBTC = property.valueBTC;
+                    description = property.description;
                 };
                 propertyBuffer.add(propertyResponse);
             };
+
         };
         return Buffer.toArray(propertyBuffer);
     };

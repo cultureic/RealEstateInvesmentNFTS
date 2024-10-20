@@ -16,6 +16,7 @@ import {AuthProvider} from  "./hooks/auth";
 import CreateProperty from "./pages/create-property/CreateProperty";
 import Properties from "./pages/my-properties/Properties"
 import NFTGrid from "./pages/NFTs/NFTS";
+import ModalManager from "./components/ModalManager";
 
 const container = document.getElementById("root");
 
@@ -39,6 +40,8 @@ root.render(
           <Route path="/properties" element={<Properties/>} />
           <Route path="/nfts" element={<NFTGrid/>}/>
         </Routes>
+          {/* Add ModalManager to render modals */}
+          <ModalManager />
         </AuthProvider>
       </BrowserRouter>
     </Flowbite>

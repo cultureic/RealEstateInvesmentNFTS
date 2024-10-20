@@ -26,6 +26,8 @@ import { createActor, canisterId } from "../declarations/STX/index.js";
 import { createOisyFactoryActor } from "../ic/oisywallet/index.js";
 import { Buffer } from "buffer";
 import { StacksTestnet, StacksMainnet } from "@stacks/network";
+import { useNavigate } from "react-router-dom";
+
 
 const buildNFTContrat = (options) => {
   return `;; This contract implements the SIP-009 community-standard Non-Fungible Token trait
@@ -123,6 +125,8 @@ const defaultOptions = {
  * @returns
  */
 export const useAuthClient = (options = defaultOptions) => {
+  const navigate = useNavigate(); // Initialize the useNavigate hook
+
   const [isAuth, setIsAuthenticated] = useState(false);
   const [authClient, setAuthClient] = useState(null);
   const [identity, setIdentity] = useState(null);
@@ -138,8 +142,34 @@ export const useAuthClient = (options = defaultOptions) => {
   const[NFTS,setNFTS] = useState(null);
   const [showModal, setShowModal] = useState(false); // State to control modal visibility
   const [step, setStep] = useState(1); // State to track the current step
+  const[isLoading,setIsLoading] = useState(true);
+  const[isError,setIsError] = useState(null);
+  const[errorMessage,setErrorMessage] = useState(null);
 
+  useEffect(() => {
+    // Function to update data
+    const updateData = () => {
+      if (STXactor) {
+        console.log("updating data")
+        createSTXPrivateKey();
+        getUserProperties();
+      }
+      if(NFTBalance){
+        getNFTsData()
+      }
+    };
 
+    // Call the update function every 2 minutes (120,000 ms)
+    const interval = setInterval(() => {
+      updateData();
+    }, 120000);
+
+    // Call updateData initially
+    updateData();
+
+    // Cleanup the interval on unmount
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     // Initialize AuthClient
@@ -199,6 +229,7 @@ export const useAuthClient = (options = defaultOptions) => {
     const broadcastResponse = await broadcastTransaction(transaction, network);
     const txId = broadcastResponse.txid;
     setShowModal(false)
+    navigate("/nfts")
   };
 
   const getNFTS = async (entity) => {
@@ -285,6 +316,8 @@ export const useAuthClient = (options = defaultOptions) => {
     );
     console.log("response to setting stxAddres", settingStxAddress);
     setShowModal(false);
+    getUserProperties();
+    navigate("/properties")
     ///todo create the STX wallet and register in the state to avoid privakey leakage. only owner of the property can call private key!
   };
 
@@ -323,6 +356,10 @@ export const useAuthClient = (options = defaultOptions) => {
         entity.stxWallet[0] + "." + entity.address.replace(/ /g, "_")
       );
       console.log("deployed status", deployedStatys);
+      getUserProperties()
+    }else{
+      setIsError(true);
+      setErrorMessage(broadcastResponse.error)
     }
   };
 
@@ -363,6 +400,7 @@ export const useAuthClient = (options = defaultOptions) => {
     }))
     console.log("NFT Data",NFTsData)
     setNFTS(NFTsData)
+    setIsLoading(false)
   };
 
   const createSTXPrivateKey = async () => {
@@ -446,7 +484,11 @@ export const useAuthClient = (options = defaultOptions) => {
     NFTS,
     showModal,
     step,
-    setShowModal
+    setShowModal,
+    isLoading,
+    errorMessage,
+    isError,
+    setIsError
   };
 };
 

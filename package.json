@@ -27,6 +27,7 @@
   "dependencies": {
     "@dfinity/auth-client": "^2.1.2",
     "@dfinity/principal": "^2.1.2",
+    "@stacks/connect": "^7.8.0",
     "@stacks/network": "^6.16.0",
     "@stacks/transactions": "^6.16.1",
     "apexcharts": "^3.36.3",

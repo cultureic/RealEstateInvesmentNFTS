@@ -25,6 +25,7 @@ const NFTGrid = () => {
 
     return (
         <NavbarSidebarLayout login={login}>
+            <div className='min-h-screen space-y-6 p-4'>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {NFTS && NFTS.map((nftItem, index) => (  // Use NFTS.map instead of NFT.map
                     <Card key={index}>
@@ -67,6 +68,7 @@ const NFTGrid = () => {
 
                     </Card>
                 ))}
+            </div>
             </div>
         </NavbarSidebarLayout>
     );
