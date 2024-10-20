@@ -1,3 +1,13 @@
+type PropertyResponse = 
+ record {
+   address: text;
+   contract: opt text;
+   description: text;
+   picture: vec nat8;
+   rentValueBTC: nat;
+   stxWallet: opt text;
+   valueBTC: nat;
+ };
 type PropertyRequest = 
  record {
    address: text;
@@ -34,6 +44,7 @@ service : {
                                    Ok: blob;
                                  });
   createProperty: (PropertyRequest) -> (nat);
+  getPropertyNFTData: (text) -> (vec PropertyResponse);
   getUserProperties: () -> (vec Property);
   propertyDeployed: (nat, text) -> (variant {
                                       Err: text;

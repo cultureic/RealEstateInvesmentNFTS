@@ -21,7 +21,7 @@ import {
 import { useAuth } from "../hooks/auth";
 
 const ExampleSidebar: FC = function () {
-  const {isAuth, createSTXPrivateKey,login,deployNFTContract } = useAuth();
+  const {isAuth,login,logout } = useAuth();
   const [currentPage, setCurrentPage] = useState("");
 
   useEffect(()=>{},[isAuth])
@@ -79,7 +79,7 @@ const ExampleSidebar: FC = function () {
                 My Properties
               </Sidebar.Item>
               <Sidebar.Item
-                href="/users/list"
+                href="/nfts"
                 icon={HiDatabase}
                 className={
                   "/users/list" === currentPage
@@ -94,8 +94,10 @@ const ExampleSidebar: FC = function () {
             }} icon={HiLogin}>
                 Sign in
               </Sidebar.Item>}
-              { isAuth &&  <Sidebar.Item onClick={deployNFTContract} icon={HiLogin}>
-                deploy STX NFT contract
+              { isAuth &&  <Sidebar.Item  icon={HiLogin}
+              onClick={()=>{logout()}}
+              >
+                Log out 
               </Sidebar.Item>}
             </Sidebar.ItemGroup>
           </Sidebar.Items>

@@ -25,6 +25,15 @@ export interface PropertyRequest {
   'address' : string,
   'valueBTC' : bigint,
 }
+export interface PropertyResponse {
+  'stxWallet' : [] | [string],
+  'rentValueBTC' : bigint,
+  'contract' : [] | [string],
+  'description' : string,
+  'picture' : Uint8Array | number[],
+  'address' : string,
+  'valueBTC' : bigint,
+}
 export interface _SERVICE {
   'canister_and_caller_pub_key' : ActorMethod<
     [],
@@ -37,6 +46,7 @@ export interface _SERVICE {
       { 'Err' : string }
   >,
   'createProperty' : ActorMethod<[PropertyRequest], bigint>,
+  'getPropertyNFTData' : ActorMethod<[string], Array<PropertyResponse>>,
   'getUserProperties' : ActorMethod<[], Array<Property>>,
   'propertyDeployed' : ActorMethod<
     [bigint, string],
@@ -50,3 +60,4 @@ export interface _SERVICE {
   >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

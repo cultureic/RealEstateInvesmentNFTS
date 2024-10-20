@@ -17,9 +17,10 @@ import {
   broadcastTransaction,
   makeContractCall,
   callReadOnlyFunction,
-  bufferCVFromString
+  bufferCVFromString,
+  principalCV
 } from "@stacks/transactions";
-import {noneCV} from "@stacks/transactions/dist/clarity/types/optionalCV.js";
+import { noneCV } from "@stacks/transactions/dist/clarity/types/optionalCV.js";
 
 import { createActor, canisterId } from "../declarations/STX/index.js";
 import { createOisyFactoryActor } from "../ic/oisywallet/index.js";
@@ -133,6 +134,12 @@ export const useAuthClient = (options = defaultOptions) => {
   const [STXPrivateKey, setSTXPrivate] = useState(null);
   const [stxBalance, setSTXBalance] = useState("0.0");
   const [userProperties, setUserProperties] = useState([]);
+  const [NFTBalance, setNFTBalance] = useState(null);
+  const[NFTS,setNFTS] = useState(null);
+  const [showModal, setShowModal] = useState(false); // State to control modal visibility
+  const [step, setStep] = useState(1); // State to track the current step
+
+
 
   useEffect(() => {
     // Initialize AuthClient
@@ -149,6 +156,12 @@ export const useAuthClient = (options = defaultOptions) => {
     }
   }, [STXactor]);
 
+  useEffect(()=>{
+    if(NFTBalance){
+      getNFTsData()
+    }
+  },[NFTBalance])
+
   const login = () => {
     authClient.login({
       ...options.loginOptions,
@@ -159,13 +172,42 @@ export const useAuthClient = (options = defaultOptions) => {
     });
   };
 
+
+  const mintNFT = async (entity) => {
+    setStep(3)
+    setShowModal(true)
+    console.log("NFTS")
+    const network = new StacksTestnet();
+    let publicArray = entity.privateKey[0];
+    publicArray[32] = 1;
+    let hex = Buffer.from(publicArray).toString("hex");
+    const txOptions = {
+      contractAddress: entity.stxWallet[0],
+      contractName: entity.address.replace(/ /g, "_"),
+      functionName: "mint",
+      functionArgs: [principalCV(stxAddress)],
+      senderKey: hex,
+      validateWithAbi: true,
+      network,
+      postConditions: [],
+      anchorMode: AnchorMode.Any,
+    };
+
+    const transaction = await makeContractCall(txOptions);
+
+    console.log("mintNFT", transaction);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    const txId = broadcastResponse.txid;
+    setShowModal(false)
+  };
+
   const getNFTS = async (entity) => {
     console.log("getting NFTS");
 
     const contractAddress = entity.stxWallet[0];
-    const contractName =  entity.address.replace(/ /g, "_")
+    const contractName = entity.address.replace(/ /g, "_")
     const functionName = "get-last-token-id";
-  //  const buffer = bufferCVFromString("");
+    //  const buffer = bufferCVFromString("");
     const network = new StacksTestnet();
     const senderAddress = stxAddress;
 
@@ -179,7 +221,7 @@ export const useAuthClient = (options = defaultOptions) => {
     };
 
     const result = await callReadOnlyFunction(options);
-    console.log("looking at result form read Only function",result)
+    console.log("looking at result form read Only function", result)
     // const network = new StacksTestnet();
     // let publicArray = entity.privateKey[0];
     // publicArray[32] = 1;
@@ -210,6 +252,8 @@ export const useAuthClient = (options = defaultOptions) => {
   };
 
   const createProperty = async (property) => {
+    setShowModal(true)
+    setStep(1)
     let propertyRequest = {
       privateKey: [],
       contract: [],
@@ -222,6 +266,7 @@ export const useAuthClient = (options = defaultOptions) => {
     };
 
     let response = await STXactor.createProperty(propertyRequest);
+    setStep(2)
     console.log("response", response);
     let id = Number(response);
     let responsePrivateKey = await STXactor.crearPropertyWallet(id);
@@ -229,6 +274,7 @@ export const useAuthClient = (options = defaultOptions) => {
     publicArray[32] = 1;
     let hex = Buffer.from(publicArray).toString("hex");
     console.log("response private key", responsePrivateKey);
+    setStep(3)
     const stacksAddress = getAddressFromPrivateKey(
       hex,
       TransactionVersion.Testnet // remove for Mainnet addresses
@@ -238,12 +284,12 @@ export const useAuthClient = (options = defaultOptions) => {
       stacksAddress
     );
     console.log("response to setting stxAddres", settingStxAddress);
-    await getUserProperties();
-    d;
+    setShowModal(false);
     ///todo create the STX wallet and register in the state to avoid privakey leakage. only owner of the property can call private key!
   };
 
   const deployNFTContract = async (entity) => {
+    setShowModal(true)
     let publicArray = entity.privateKey[0];
     publicArray[32] = 1;
     let hex = Buffer.from(publicArray).toString("hex");
@@ -262,16 +308,15 @@ export const useAuthClient = (options = defaultOptions) => {
     };
 
     const transaction = await makeContractDeploy(txOptions);
+    setStep(2)
     console.log("TX", transaction);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log("BROADCAST TX", broadcastResponse);
     const txId = broadcastResponse.txid;
     console.log("Brodcast id", txId);
+    setShowModal(false)
     if (
-      transaction &&
-      transaction.payload &&
-      transaction.payload.codeBody &&
-      transaction.payload.payloadType === 6
+      !broadcastResponse.error
     ) {
       let deployedStatys = await STXactor.propertyDeployed(
         entity.id,
@@ -292,7 +337,32 @@ export const useAuthClient = (options = defaultOptions) => {
     console.log("balance", response);
     if (response && response.stx) {
       setSTXBalance(response.stx.balance);
+      let nftKeys = (Object.keys(response.non_fungible_tokens));
+      let nftParses = nftKeys.map((item) => {
+        const count =  response.non_fungible_tokens[item].count;
+        const parts = item.split("::");
+        // Step 2: Split the second part (NFT section) by "-" and grab the last part
+        const nftParts = parts[1].split("-");
+        const nftNumber = parseInt(nftParts[nftParts.length - 1], 10); // Convert to a number
+        // Step 3: Form the final array with the first part and the extracted number
+        return [parts[0], nftNumber,count]
+      })
+
+
+      console.log("nft keys", nftParses)
+      setNFTBalance(nftParses)
     }
+  };
+
+
+  const getNFTsData = async () =>{
+   let NFTsData=  await Promise.all(NFTBalance.map(async (item)=>{
+      let response =await STXactor.getPropertyNFTData(item[0]);
+      console.log("response nft data",response)
+      return {nftData:response[0],count:item[2]};
+    }))
+    console.log("NFT Data",NFTsData)
+    setNFTS(NFTsData)
   };
 
   const createSTXPrivateKey = async () => {
@@ -372,6 +442,11 @@ export const useAuthClient = (options = defaultOptions) => {
     createProperty,
     userProperties,
     getNFTS,
+    mintNFT,
+    NFTS,
+    showModal,
+    step,
+    setShowModal
   };
 };
 

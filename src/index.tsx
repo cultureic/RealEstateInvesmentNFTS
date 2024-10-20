@@ -14,7 +14,8 @@ import EcommerceProductsPage from "./pages/e-commerce/products";
 import UserListPage from "./pages/users/list";
 import {AuthProvider} from  "./hooks/auth";
 import CreateProperty from "./pages/create-property/CreateProperty";
-import Properties from "./pages/my-properties/Properties";
+import Properties from "./pages/my-properties/Properties"
+import NFTGrid from "./pages/NFTs/NFTS";
 
 const container = document.getElementById("root");
 
@@ -35,8 +36,8 @@ root.render(
             path="/create-property"
             element={<CreateProperty />}
           />
-          <Route path="/users/list" element={<UserListPage />} />
           <Route path="/properties" element={<Properties/>} />
+          <Route path="/nfts" element={<NFTGrid/>}/>
         </Routes>
         </AuthProvider>
       </BrowserRouter>

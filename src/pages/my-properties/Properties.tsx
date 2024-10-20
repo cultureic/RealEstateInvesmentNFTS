@@ -1,10 +1,12 @@
 // @ts-nocheck
 
 import React, { useEffect, useState } from 'react';
-import { Card, TextInput, Modal, Button, Badge } from 'flowbite-react';
+import { Card, TextInput, Modal, Button, Badge, Spinner } from 'flowbite-react';
 import { useAuth } from '../../hooks/auth';
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import { Principal } from '@dfinity/principal';
+import { FaHome } from "react-icons/fa"; // Importing house icon
+
 
 // Helper function to convert Uint8Array to Base64 string for image display
 const arrayBufferToBase64 = (buffer: Uint8Array) => {
@@ -18,22 +20,27 @@ const arrayBufferToBase64 = (buffer: Uint8Array) => {
 };
 
 const UserProperties: React.FC = () => {
-    const { userProperties, login, deployNFTContract, getNFTS } = useAuth();
+    const { userProperties, login, deployNFTContract, getNFTS, mintNFT, setShowModal, showModal, step } = useAuth();
     const [selectedEntity, setSelectedEntity] = useState<any | null>(null); // State for the selected entity
     const [isOpen, setIsOpen] = useState(false); // State to control main modal visibility
     const [isDeployModalOpen, setDeployModalOpen] = useState(false); // State for deploy confirmation modal
 
+    useEffect(() => { }, [showModal, step])
 
-    useEffect(()=>{
-        if(userProperties && userProperties[0]){
+    useEffect(() => {
+        if (userProperties && userProperties[0]) {
             getNFTS(userProperties[0])
         }
-    },[userProperties])
+    }, [userProperties])
 
     const openModal = (entity: any) => {
         setSelectedEntity(entity);
         setIsOpen(true);
     };
+
+    const mint = (entity) => {
+        mintNFT(entity)
+    }
 
     const closeModal = () => {
         setIsOpen(false);
@@ -42,8 +49,8 @@ const UserProperties: React.FC = () => {
 
     const openDeployModal = (entity) => {
         setSelectedEntity(entity);
-            setDeployModalOpen(true);
-        
+        setDeployModalOpen(true);
+
     };
 
     const closeDeployModal = () => {
@@ -60,7 +67,7 @@ const UserProperties: React.FC = () => {
         }
     };
 
-    useEffect(() => {}, [userProperties]);
+    useEffect(() => { }, [userProperties]);
 
     return (
         <NavbarSidebarLayout login={login}>
@@ -82,7 +89,7 @@ const UserProperties: React.FC = () => {
                                         />
                                     </div>
                                 )}
-                                
+
                                 {/* Address */}
                                 <div className="mb-4">
                                     <h2 className="text-lg font-semibold mb-2 dark:text-white">Address</h2>
@@ -104,11 +111,22 @@ const UserProperties: React.FC = () => {
                                 <div className="mb-4">
                                     <h3 className="text-lg font-semibold dark:text-white">Status</h3>
                                     {status === "notdeployed" ? (
-                                        <Button onClick={() => {  openDeployModal(entity); }} color="failure">Deploy Contract</Button>
+                                        <Button onClick={() => { openDeployModal(entity); }} color="failure">Deploy Contract</Button>
                                     ) : (
                                         <>
-                                        <Badge color="success" size="lg">Deployed</Badge>
-                                        <TextInput id={`address-${index+entity.contract[0]}`} type="text" value={entity.contract[0]} readOnly />
+                                            <Badge color="success" size="lg">Deployed</Badge>
+                                            <div
+                                                onClick={() => window.location.href = `https://explorer.hiro.so/address/${entity.contract[0]}?chain=testnet`}
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                <TextInput
+                                                    id={`address-${index + entity.contract[0]}`}
+                                                    type="text"
+                                                    value={entity.contract[0]}
+                                                    readOnly
+                                                />
+                                            </div>
+                                            <Button onClick={() => { mint(entity); }} color="failure">Mint</Button>
                                         </>
                                     )}
                                 </div>
@@ -138,7 +156,7 @@ const UserProperties: React.FC = () => {
                                         />
                                     </div>
                                 )}
-                                
+
                                 {/* Two columns for the text */}
                                 <div className="col-span-2 grid grid-cols-2 gap-4">
                                     {/* First Column */}
@@ -197,6 +215,42 @@ const UserProperties: React.FC = () => {
                         </Modal.Footer>
                     </Modal>
                 )}
+
+                {/* Step-by-Step Modal */}
+                <Modal show={showModal} onClose={() => setShowModal(false)}>
+                    { step && step < 3 && <Modal.Header>Step {step} of 2</Modal.Header>
+                    }          <Modal.Body>
+                    {step && step > 3 && <Modal.Header>Minting NFT</Modal.Header>
+                    }          <Modal.Body></Modal.Body>
+                        <div className="flex justify-center items-center mb-4">
+                            {/* Spinner added for all steps */}
+                            <Spinner size="lg" />
+                        </div>
+                        {step === 1 ? (
+                            <div>
+                                <h3 className="text-lg font-medium">NFT property Contract Deployment</h3>
+                                <p>STX contract being deployed!.</p>
+                            </div>
+                        ) : step === 2 ? (
+                            <div>
+                                <h3 className="text-lg font-medium">Signing TX</h3>
+                                <p>Your STX transaction is being sign by the property wallet</p>
+                            </div>
+                        ) : (
+                            <div>
+                                <h3 className="text-lg font-medium">Signing TX</h3>
+                                <p>Your STX NFT is being minted.</p>
+                            </div>
+                        )}
+                    </Modal.Body>
+                    <Modal.Footer>
+                        please be patient while we process your request.......
+                        {/* Animated house icon */}
+                        <FaHome
+                            className="ml-2 animate-bounce text-xl text-blue-500" // Bouncing animation
+                        />
+                    </Modal.Footer>
+                </Modal>
             </div>
         </NavbarSidebarLayout>
     );

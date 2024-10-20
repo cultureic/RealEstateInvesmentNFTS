@@ -60,6 +60,16 @@ actor STXSigner {
         status : Text;
     };
 
+    public type PropertyResponse ={
+        picture:[Nat8];
+        valueBTC:Nat;
+        rentValueBTC:Nat;
+        address:Text;
+        stxWallet:?Text;
+        description:Text;
+        contract:?Text;
+    };
+
     let registeredProperties = TrieMap.TrieMap<Text, Property>(Text.equal, Text.hash);
 
     let ic : IC = actor ("aaaaa-aa");
@@ -221,6 +231,28 @@ actor STXSigner {
         for (property in registeredProperties.vals()) {
             if (property.owner == msg.caller) {
                 propertyBuffer.add(property);
+            };
+        };
+        return Buffer.toArray(propertyBuffer);
+    };
+
+
+
+     public shared (msg) func getPropertyNFTData(contract:Text) : async [PropertyResponse] {
+    let propertyBuffer : Buffer.Buffer<PropertyResponse> = Buffer.Buffer<PropertyResponse>(0);
+        for (property in registeredProperties.vals()) {
+            let ?contractProperty = property.contract;
+            if (Text.equal(contractProperty,contract)) {
+                let propertyResponse:PropertyResponse = {
+                    address=property.address;
+                    contract=property.contract;
+                    picture=property.picture;
+                    rentValueBTC=property.rentValueBTC;
+                    stxWallet=property.stxWallet;
+                    valueBTC=property.valueBTC;
+                    description=property.description;
+                };
+                propertyBuffer.add(propertyResponse);
             };
         };
         return Buffer.toArray(propertyBuffer);

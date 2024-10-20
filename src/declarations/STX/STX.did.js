@@ -9,6 +9,15 @@ export const idlFactory = ({ IDL }) => {
     'address' : IDL.Text,
     'valueBTC' : IDL.Nat,
   });
+  const PropertyResponse = IDL.Record({
+    'stxWallet' : IDL.Opt(IDL.Text),
+    'rentValueBTC' : IDL.Nat,
+    'contract' : IDL.Opt(IDL.Text),
+    'description' : IDL.Text,
+    'picture' : IDL.Vec(IDL.Nat8),
+    'address' : IDL.Text,
+    'valueBTC' : IDL.Nat,
+  });
   const Property = IDL.Record({
     'id' : IDL.Nat,
     'status' : IDL.Text,
@@ -39,6 +48,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'createProperty' : IDL.Func([PropertyRequest], [IDL.Nat], []),
+    'getPropertyNFTData' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(PropertyResponse)],
+        [],
+      ),
     'getUserProperties' : IDL.Func([], [IDL.Vec(Property)], []),
     'propertyDeployed' : IDL.Func(
         [IDL.Nat, IDL.Text],
