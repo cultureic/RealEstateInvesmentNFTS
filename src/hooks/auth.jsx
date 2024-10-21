@@ -142,7 +142,7 @@ export const useAuthClient = (options = defaultOptions) => {
   const[NFTS,setNFTS] = useState(null);
   const [showModal, setShowModal] = useState(false); // State to control modal visibility
   const [step, setStep] = useState(1); // State to track the current step
-  const[isLoading,setIsLoading] = useState(true);
+  const[isLoading,setIsLoading] = useState(isAuth);
   const[isError,setIsError] = useState(null);
   const[errorMessage,setErrorMessage] = useState(null);
 
@@ -178,6 +178,8 @@ export const useAuthClient = (options = defaultOptions) => {
       updateClient(client);
     });
   }, []);
+
+
 
   useEffect(() => {
     if (STXactor) {
@@ -429,6 +431,9 @@ export const useAuthClient = (options = defaultOptions) => {
 
   async function updateClient(client) {
     const isAuthenticated = await client.isAuthenticated();
+    if(isAuthenticated){
+      setIsLoading(true);
+    }
     console.log("updating client", isAuthenticated);
     setIsAuthenticated(isAuthenticated);
 
