@@ -433,6 +433,8 @@ export const useAuthClient = (options = defaultOptions) => {
     const isAuthenticated = await client.isAuthenticated();
     if(isAuthenticated){
       setIsLoading(true);
+    }else{
+      // navigate("/login")
     }
     console.log("updating client", isAuthenticated);
     setIsAuthenticated(isAuthenticated);

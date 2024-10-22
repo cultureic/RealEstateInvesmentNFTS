@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { StrictMode } from "react";
+import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 
 import "./index.css";
@@ -12,7 +12,7 @@ import SignInPage from "./pages/authentication/sign-in";
 import SignUpPage from "./pages/authentication/sign-up";
 import EcommerceProductsPage from "./pages/e-commerce/products";
 import UserListPage from "./pages/users/list";
-import {AuthProvider} from  "./hooks/auth";
+import { AuthProvider, useAuth } from "./hooks/auth";
 import CreateProperty from "./pages/create-property/CreateProperty";
 import Properties from "./pages/my-properties/Properties"
 import NFTGrid from "./pages/NFTs/NFTS";
@@ -26,21 +26,37 @@ if (!container) {
 
 const root = createRoot(container);
 
+const App = () => {
+  const { isAuth } = useAuth();
+  useEffect(() => {
+    if(isAuth){
+
+    }
+  }, [isAuth])
+  return (
+    <>
+   {  isAuth && <Routes>
+        <Route path="/" element={<DashboardPage />} index />
+        <Route
+          path="/create-property"
+          element={<CreateProperty />}
+        />
+        <Route path="/properties" element={<Properties />} />
+        <Route path="/nfts" element={<NFTGrid />} />
+      </Routes>}
+      {!isAuth && <SignInPage />}
+      </>
+
+  )
+}
+
 root.render(
   <StrictMode>
     <Flowbite theme={{ theme }}>
       <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/" element={<DashboardPage />} index />
-          <Route
-            path="/create-property"
-            element={<CreateProperty />}
-          />
-          <Route path="/properties" element={<Properties/>} />
-          <Route path="/nfts" element={<NFTGrid/>}/>
-        </Routes>
-          {/* Add ModalManager to render modals */}
+        <AuthProvider>
+
+          <App />
           <ModalManager />
         </AuthProvider>
       </BrowserRouter>
