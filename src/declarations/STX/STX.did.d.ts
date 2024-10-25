@@ -40,9 +40,15 @@ export interface _SERVICE {
     { 'Ok' : { 'public_key' : Uint8Array | number[] } } |
       { 'Err' : string }
   >,
+  'checkifHasNFT' : ActorMethod<[string, Principal], Array<bigint>>,
   'crearPropertyWallet' : ActorMethod<
     [bigint],
     { 'Ok' : Uint8Array | number[] } |
+      { 'Err' : string }
+  >,
+  'createNewMint' : ActorMethod<
+    [string, string, bigint],
+    { 'Ok' : string } |
       { 'Err' : string }
   >,
   'createProperty' : ActorMethod<[PropertyRequest], bigint>,
