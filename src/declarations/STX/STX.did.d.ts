@@ -7,6 +7,7 @@ export interface Property {
   'status' : string,
   'stxWallet' : [] | [string],
   'rentValueBTC' : bigint,
+  'ckBTCWallet' : [] | [string],
   'contract' : [] | [string],
   'owner' : Principal,
   'description' : string,
@@ -40,6 +41,10 @@ export interface _SERVICE {
     { 'Ok' : { 'public_key' : Uint8Array | number[] } } |
       { 'Err' : string }
   >,
+  'canister_and_caller_pub_key_signer' : ActorMethod<
+    [Principal],
+    Uint8Array | number[]
+  >,
   'checkifHasNFT' : ActorMethod<[string, Principal], Array<bigint>>,
   'crearPropertyWallet' : ActorMethod<
     [bigint],
@@ -60,7 +65,7 @@ export interface _SERVICE {
       { 'Err' : string }
   >,
   'setStxPropertyWallet' : ActorMethod<
-    [bigint, string],
+    [bigint, string, string],
     { 'Ok' : string } |
       { 'Err' : string }
   >,
