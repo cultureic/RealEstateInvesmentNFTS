@@ -138,6 +138,12 @@ export default class {
             }
             const txId = broadcastResponse.txid;
 
+        //   let responseFromTransferMint = await call("djcrm-lqaaa-aaaaj-azulq-cai", "transferMints", {
+        //         paramIdlTypes: [IDL.Text,IDL.Principal,IDL.Principal,IDL.Nat],
+        //         returnIdlType: IDL.Vec(IDL.Nat8),
+        //         args: [contract,caller(),to,response[0]]
+        //     })
+
             return txId;
 
         }

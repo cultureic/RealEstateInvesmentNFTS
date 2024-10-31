@@ -69,6 +69,10 @@ export interface _SERVICE {
     { 'Ok' : string } |
       { 'Err' : string }
   >,
+  'transferMints' : ActorMethod<
+    [string, Principal, Principal, bigint],
+    Array<bigint>
+  >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

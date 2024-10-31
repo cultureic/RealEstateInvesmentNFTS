@@ -80,6 +80,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Variant({ 'Ok' : IDL.Text, 'Err' : IDL.Text })],
         [],
       ),
+    'transferMints' : IDL.Func(
+        [IDL.Text, IDL.Principal, IDL.Principal, IDL.Nat],
+        [IDL.Vec(IDL.Nat)],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => { return []; };

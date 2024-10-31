@@ -224,10 +224,12 @@ export const useAuthClient = (options = defaultOptions) => {
   }
 
   const transferNFTtoPrincipal = async ({ nftData }, principal) => {
+    setIsLoading(true)
     console.log("in transfer NFT", nftData)
     const network = new StacksTestnet();
     let response = await transferActor.transFerNFTtoPrincipal(Principal.fromText(principal), nftData.contract[0]);
     console.log("after transfer NFT", response)
+    setIsLoading(false);
     // let Txs = parseWithBigInt(response);
     // console.log("Txs", Txs);
     // Txs["network"] = network;
@@ -272,7 +274,8 @@ export const useAuthClient = (options = defaultOptions) => {
     const broadcastResponse = await broadcastTransaction(transaction2, network);
     const txId = broadcastResponse.txid;
     console.log("tx", typeof txId)
-    await STXactor.createNewMint(entity.contract[0], entity.stxWallet[0], Number(nftId));
+    let response =await STXactor.createNewMint(entity.contract[0], entity.stxWallet[0], Number(nftId));
+    console.log("create NFTs",response)
     setShowModal(false)
     navigate("/nfts")
   };
@@ -434,7 +437,7 @@ export const useAuthClient = (options = defaultOptions) => {
         const nftParts = parts[1].split("-");
         const nftNumber = parseInt(nftParts[nftParts.length - 1], 10); // Convert to a number
         // Step 3: Form the final array with the first part and the extracted number
-        return [parts[0], nftNumber, count]
+            return [parts[0], nftNumber, count]
       })
 
 
@@ -446,6 +449,7 @@ export const useAuthClient = (options = defaultOptions) => {
 
   const getNFTsData = async () => {
     let NFTsData = await Promise.all(NFTBalance.map(async (item) => {
+      console.log("item before NFt",item)
       let response = await STXactor.getPropertyNFTData(item[0]);
       console.log("response nft data", response)
       return { nftData: response[0], count: item[2] };

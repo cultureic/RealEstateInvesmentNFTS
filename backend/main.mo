@@ -41,7 +41,7 @@ actor STXSigner {
     };
 
     public type Mints = {
-        mints : TrieMap.TrieMap<Principal,Mint>;
+        mints : TrieMap.TrieMap<Principal, Mint>;
     };
 
     public type Property = {
@@ -56,7 +56,7 @@ actor STXSigner {
         status : Text;
         owner : Principal;
         stxWallet : ?Text;
-        ckBTCWallet: ?Text;
+        ckBTCWallet : ?Text;
     };
 
     public type PropertyRequest = {
@@ -110,50 +110,100 @@ actor STXSigner {
         #Ok : Text;
         #Err : Text;
     } {
-        switch(registeredMints.get(contract)){
-            case(?mints){
-                    switch(mints.mints.get(msg.caller)){
-                        case(?mint){
-                            let newIds:[Nat] = [id];
-                            let newIdsForMint = Array.append(mint.ids,newIds);
-                            let newMint:Mint = {ownerStx=mint.ownerStx;ids=newIdsForMint;};
-                            mints.mints.put(msg.caller,newMint);
-                            return #Ok("new mint created");
+        switch (registeredMints.get(contract)) {
+            case (?mints) {
+                switch (mints.mints.get(msg.caller)) {
+                    case (?mint) {
+                        let newIds : [Nat] = [id];
+                        let newIdsForMint = Array.append(mint.ids, newIds);
+                        let newMint : Mint = {
+                            ownerStx = mint.ownerStx;
+                            ids = newIdsForMint;
                         };
-                        case(null){
-                            return #Err("this should never happen");
-                        };
-                        
+                        mints.mints.put(msg.caller, newMint);
+                        return #Ok("new mint created");
                     };
+                    case (null) {
+                        return #Err("this should never happen");
+                    };
+
+                };
             };
-           case (null){
-            let newTrieMapsForContract = TrieMap.TrieMap<Principal,Mint>(Principal.equal,Principal.hash);
-            newTrieMapsForContract.put(msg.caller,{ids=[id];ownerStx=stxOwner;});
-            registeredMints.put(contract,{mints=newTrieMapsForContract});
-            return #Ok("new trie map create for contract");
-           };
+            case (null) {
+                let newTrieMapsForContract = TrieMap.TrieMap<Principal, Mint>(Principal.equal, Principal.hash);
+                newTrieMapsForContract.put(msg.caller, { ids = [id]; ownerStx = stxOwner });
+                registeredMints.put(contract, { mints = newTrieMapsForContract });
+                return #Ok("new trie map create for contract");
+            };
         };
         return #Ok("hi");
     };
 
+    public shared (msg) func transferMints(contract : Text, ownerFrom : Principal, ownerTo : Principal, id : Nat) : async [Nat] {
+        switch (registeredMints.get(contract)) {
+            case (?contract) {
+                switch (contract.mints.get(ownerFrom)) {
+                    case (?owned) {
+                        let newOwned : Buffer.Buffer<Nat> = Buffer.Buffer<Nat>(0);
+                        label eachOwned for (idinVals in owned.ids.vals()) {
+                            if (idinVals == id) {
+                                continue eachOwned;
+                            } else {
+                                newOwned.add(idinVals);
+                            };
+                        };
 
-    public shared (msg) func checkifHasNFT(contract:Text,owner:Principal):async[Nat]{
-        switch(registeredMints.get(contract)){
-            case(?contract){
-                switch(contract.mints.get(owner)){
-                    case(?owned){
-                            return owned.ids;
+                        let newMint : Mint = {
+                            ownerStx = owned.ownerStx;
+                            ids = Buffer.toArray(newOwned);
+                        };
+                        contract.mints.put(ownerFrom, newMint);
+                        switch (contract.mints.get(ownerTo)) {
+                            case (?mint) {
+                                let newIds : [Nat] = [id];
+                                let newIdsForMint = Array.append(mint.ids, newIds);
+                                let newMint : Mint = {
+                                    ownerStx = mint.ownerStx;
+                                    ids = newIdsForMint;
+                                };
+                                contract.mints.put(ownerTo, newMint);
+                                return newIdsForMint;
+                            };
+                            case (null) {
+                                return [0, 0, 0, 0];
+                            };
+
+                        };
                     };
-                    case(null){
-                        return[0,0,0,0];
+                    case (null) {
+                        return [0, 0, 0, 0];
                     };
-                }
+                };
             };
-            case(null){
-                return[0];
+            case (null) {
+                return [0];
             };
 
-        }
+        };
+    };
+
+    public shared (msg) func checkifHasNFT(contract : Text, owner : Principal) : async [Nat] {
+        switch (registeredMints.get(contract)) {
+            case (?contract) {
+                switch (contract.mints.get(owner)) {
+                    case (?owned) {
+                        return owned.ids;
+                    };
+                    case (null) {
+                        return [0, 0, 0, 0];
+                    };
+                };
+            };
+            case (null) {
+                return [0];
+            };
+
+        };
     };
 
     public shared (msg) func crearPropertyWallet(id : Nat) : async {
@@ -202,7 +252,7 @@ actor STXSigner {
         };
     };
 
-    public shared (msg) func setStxPropertyWallet(id : Nat, wallet : Text,ckBTCWallet:Text) : async {
+    public shared (msg) func setStxPropertyWallet(id : Nat, wallet : Text, ckBTCWallet : Text) : async {
         #Ok : Text;
         #Err : Text;
     } {
@@ -290,8 +340,7 @@ actor STXSigner {
         };
     };
 
-
-      public shared (msg) func canister_and_caller_pub_key_signer(signerPrincipal:Principal) : async Blob {
+    public shared (msg) func canister_and_caller_pub_key_signer(signerPrincipal : Principal) : async Blob {
         let caller = Principal.toBlob(msg.caller);
         let signer = Principal.toBlob(signerPrincipal);
         let canisterBlob = Principal.toBlob(Principal.fromActor(STXSigner));
@@ -299,7 +348,7 @@ actor STXSigner {
         try {
             let { public_key } = await ic.ecdsa_public_key({
                 canister_id = null;
-                derivation_path = [caller, canisterBlob, canisterDerivationPassword,signer];
+                derivation_path = [caller, canisterBlob, canisterDerivationPassword, signer];
                 key_id = { curve = #secp256k1; name = "key_1" };
             });
             return public_key;
