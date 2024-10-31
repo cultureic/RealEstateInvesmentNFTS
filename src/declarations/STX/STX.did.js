@@ -42,9 +42,19 @@ export const idlFactory = ({ IDL }) => {
         ],
         [],
       ),
+    'checkifHasNFT' : IDL.Func(
+        [IDL.Text, IDL.Principal],
+        [IDL.Vec(IDL.Nat)],
+        [],
+      ),
     'crearPropertyWallet' : IDL.Func(
         [IDL.Nat],
         [IDL.Variant({ 'Ok' : IDL.Vec(IDL.Nat8), 'Err' : IDL.Text })],
+        [],
+      ),
+    'createNewMint' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Nat],
+        [IDL.Variant({ 'Ok' : IDL.Text, 'Err' : IDL.Text })],
         [],
       ),
     'createProperty' : IDL.Func([PropertyRequest], [IDL.Nat], []),

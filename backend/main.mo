@@ -35,6 +35,15 @@ actor STXSigner {
 
     type IC = IC.Self;
 
+    public type Mint = {
+        ids : [Nat];
+        ownerStx : Text;
+    };
+
+    public type Mints = {
+        mints : TrieMap.TrieMap<Principal,Mint>;
+    };
+
     public type Property = {
         id : Nat;
         privateKey : ?[Nat8];
@@ -69,6 +78,7 @@ actor STXSigner {
         description : Text;
         contract : ?Text;
     };
+    let registeredMints = TrieMap.TrieMap<Text, Mints>(Text.equal, Text.hash);
 
     let registeredProperties = TrieMap.TrieMap<Text, Property>(Text.equal, Text.hash);
 
@@ -92,6 +102,56 @@ actor STXSigner {
         };
         registeredProperties.put(Nat.toText(newId), newProperty);
         return newId;
+    };
+
+    public shared (msg) func createNewMint(contract : Text, stxOwner : Text, id : Nat) : async {
+        #Ok : Text;
+        #Err : Text;
+    } {
+        switch(registeredMints.get(contract)){
+            case(?mints){
+                    switch(mints.mints.get(msg.caller)){
+                        case(?mint){
+                            let newIds:[Nat] = [id];
+                            let newIdsForMint = Array.append(mint.ids,newIds);
+                            let newMint:Mint = {ownerStx=mint.ownerStx;ids=newIdsForMint;};
+                            mints.mints.put(msg.caller,newMint);
+                            return #Ok("new mint created");
+                        };
+                        case(null){
+                            return #Err("this should never happen");
+                        };
+                        
+                    };
+            };
+           case (null){
+            let newTrieMapsForContract = TrieMap.TrieMap<Principal,Mint>(Principal.equal,Principal.hash);
+            newTrieMapsForContract.put(msg.caller,{ids=[id];ownerStx=stxOwner;});
+            registeredMints.put(contract,{mints=newTrieMapsForContract});
+            return #Ok("new trie map create for contract");
+           };
+        };
+        return #Ok("hi");
+    };
+
+
+    public shared (msg) func checkifHasNFT(contract:Text,owner:Principal):async[Nat]{
+        switch(registeredMints.get(contract)){
+            case(?contract){
+                switch(contract.mints.get(owner)){
+                    case(?owned){
+                            return owned.ids;
+                    };
+                    case(null){
+                        return[0];
+                    };
+                }
+            };
+            case(null){
+                return[0];
+            };
+
+        }
     };
 
     public shared (msg) func crearPropertyWallet(id : Nat) : async {
@@ -238,7 +298,7 @@ actor STXSigner {
     public shared (msg) func getPropertyNFTData(contract : Text) : async [PropertyResponse] {
         let propertyBuffer : Buffer.Buffer<PropertyResponse> = Buffer.Buffer<PropertyResponse>(0);
         label eachProperty for (property in registeredProperties.vals()) {
-            let ?contractProperty = property.contract else continue  eachProperty;
+            let ?contractProperty = property.contract else continue eachProperty;
 
             if (Text.equal(contractProperty, contract)) {
                 let propertyResponse : PropertyResponse = {

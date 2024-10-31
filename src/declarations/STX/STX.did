@@ -39,10 +39,15 @@ service : {
       Err: text;
       Ok: record {public_key: blob;};
     });
+  checkifHasNFT: (text, principal) -> (vec nat);
   crearPropertyWallet: (nat) -> (variant {
                                    Err: text;
                                    Ok: blob;
                                  });
+  createNewMint: (text, text, nat) -> (variant {
+                                         Err: text;
+                                         Ok: text;
+                                       });
   createProperty: (PropertyRequest) -> (nat);
   getPropertyNFTData: (text) -> (vec PropertyResponse);
   getUserProperties: () -> (vec Property);
