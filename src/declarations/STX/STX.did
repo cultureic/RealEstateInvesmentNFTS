@@ -61,4 +61,5 @@ service : {
                                                 Err: text;
                                                 Ok: text;
                                               });
+  transferMints: (text, principal, principal, nat) -> (vec nat);
 }

@@ -12290,12 +12290,12 @@ var require_core = __commonJS({
       var x = Math.round(Math.log(n4) * Math.LOG10E);
       return x - (Number("1e" + x) > n4);
     }
-    function Record4(obj) {
+    function Record3(obj) {
       for (var k in obj) {
-        if (obj instanceof Record4 || hop.call(obj, k)) defineProperty(this, k, { value: obj[k], enumerable: true, writable: true, configurable: true });
+        if (obj instanceof Record3 || hop.call(obj, k)) defineProperty(this, k, { value: obj[k], enumerable: true, writable: true, configurable: true });
       }
     }
-    Record4.prototype = objCreate(null);
+    Record3.prototype = objCreate(null);
     function List() {
       defineProperty(this, "length", { writable: true, value: 0 });
       if (arguments.length) arrPush.apply(this, arrSlice.call(arguments));
@@ -12794,7 +12794,7 @@ var require_core = __commonJS({
         availableLocale = BestAvailableLocale(availableLocales, noExtensionsLocale);
         i2++;
       }
-      var result2 = new Record4();
+      var result2 = new Record3();
       if (availableLocale !== void 0) {
         result2["[[locale]]"] = availableLocale;
         if (String(locale) !== String(noExtensionsLocale)) {
@@ -12828,7 +12828,7 @@ var require_core = __commonJS({
         extensionSubtags = split4.call(extension2, "-");
         extensionSubtagsLength = extensionSubtags.length;
       }
-      var result2 = new Record4();
+      var result2 = new Record3();
       result2["[[dataLocale]]"] = foundLocale;
       var supportedExtension = "-u";
       var i2 = 0;
@@ -12905,7 +12905,7 @@ var require_core = __commonJS({
     function SupportedLocales(availableLocales, requestedLocales, options) {
       var matcher = void 0, subset = void 0;
       if (options !== void 0) {
-        options = new Record4(toObject2(options));
+        options = new Record3(toObject2(options));
         matcher = options.localeMatcher;
         if (matcher !== void 0) {
           matcher = String(matcher);
@@ -13026,7 +13026,7 @@ var require_core = __commonJS({
         options = {};
       else
         options = toObject2(options);
-      var opt = new Record4(), matcher = GetOption(options, "localeMatcher", "string", new List("lookup", "best fit"), "best fit");
+      var opt = new Record3(), matcher = GetOption(options, "localeMatcher", "string", new List("lookup", "best fit"), "best fit");
       opt["[[localeMatcher]]"] = matcher;
       var localeData = internals.NumberFormat["[[localeData]]"];
       var r3 = ResolveLocale(internals.NumberFormat["[[availableLocales]]"], requestedLocales, opt, internals.NumberFormat["[[relevantExtensionKeys]]"], localeData);
@@ -13368,7 +13368,7 @@ var require_core = __commonJS({
       configurable: true,
       writable: true,
       value: function value() {
-        var prop = void 0, descs = new Record4(), props = ["locale", "numberingSystem", "style", "currency", "currencyDisplay", "minimumIntegerDigits", "minimumFractionDigits", "maximumFractionDigits", "minimumSignificantDigits", "maximumSignificantDigits", "useGrouping"], internal3 = this !== null && babelHelpers$1["typeof"](this) === "object" && getInternalProperties(this);
+        var prop = void 0, descs = new Record3(), props = ["locale", "numberingSystem", "style", "currency", "currencyDisplay", "minimumIntegerDigits", "minimumFractionDigits", "maximumFractionDigits", "minimumSignificantDigits", "maximumSignificantDigits", "useGrouping"], internal3 = this !== null && babelHelpers$1["typeof"](this) === "object" && getInternalProperties(this);
         if (!internal3 || !internal3["[[initializedNumberFormat]]"]) throw new TypeError("`this` value for resolvedOptions() is not an initialized Intl.NumberFormat object.");
         for (var i2 = 0, max = props.length; i2 < max; i2++) {
           if (hop.call(internal3, prop = "[[" + props[i2] + "]]")) descs[props[i2]] = { value: internal3[prop], writable: true, configurable: true, enumerable: true };
@@ -13652,7 +13652,7 @@ var require_core = __commonJS({
       internal3["[[initializedIntlObject]]"] = true;
       var requestedLocales = CanonicalizeLocaleList(locales);
       options = ToDateTimeOptions(options, "any", "date");
-      var opt = new Record4();
+      var opt = new Record3();
       var matcher = GetOption(options, "localeMatcher", "string", new List("lookup", "best fit"), "best fit");
       opt["[[localeMatcher]]"] = matcher;
       var DateTimeFormat = internals.DateTimeFormat;
@@ -13669,7 +13669,7 @@ var require_core = __commonJS({
         if (tz !== "UTC") throw new RangeError("timeZone is not supported.");
       }
       internal3["[[timeZone]]"] = tz;
-      opt = new Record4();
+      opt = new Record3();
       for (var prop in dateTimeComponents) {
         if (!hop.call(dateTimeComponents, prop)) continue;
         var value = GetOption(options, prop, "string", dateTimeComponents[prop]);
@@ -13750,7 +13750,7 @@ var require_core = __commonJS({
       if (options === void 0) options = null;
       else {
         var opt2 = toObject2(options);
-        options = new Record4();
+        options = new Record3();
         for (var k in opt2) {
           options[k] = opt2[k];
         }
@@ -14051,7 +14051,7 @@ var require_core = __commonJS({
     }
     function ToLocalTime(date, calendar, timeZone) {
       var d = new Date(date), m2 = "get" + (timeZone || "");
-      return new Record4({
+      return new Record3({
         "[[weekday]]": d[m2 + "Day"](),
         "[[era]]": +(d[m2 + "FullYear"]() >= 0),
         "[[year]]": d[m2 + "FullYear"](),
@@ -14068,7 +14068,7 @@ var require_core = __commonJS({
       writable: true,
       configurable: true,
       value: function value() {
-        var prop = void 0, descs = new Record4(), props = ["locale", "calendar", "numberingSystem", "timeZone", "hour12", "weekday", "era", "year", "month", "day", "hour", "minute", "second", "timeZoneName"], internal3 = this !== null && babelHelpers$1["typeof"](this) === "object" && getInternalProperties(this);
+        var prop = void 0, descs = new Record3(), props = ["locale", "calendar", "numberingSystem", "timeZone", "hour12", "weekday", "era", "year", "month", "day", "hour", "minute", "second", "timeZoneName"], internal3 = this !== null && babelHelpers$1["typeof"](this) === "object" && getInternalProperties(this);
         if (!internal3 || !internal3["[[initializedDateTimeFormat]]"]) throw new TypeError("`this` value for resolvedOptions() is not an initialized Intl.DateTimeFormat object.");
         for (var i2 = 0, max = props.length; i2 < max; i2++) {
           if (hop.call(internal3, prop = "[[" + props[i2] + "]]")) descs[props[i2]] = { value: internal3[prop], writable: true, configurable: true, enumerable: true };
