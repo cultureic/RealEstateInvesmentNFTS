@@ -56,6 +56,7 @@ actor STXSigner {
         status : Text;
         owner : Principal;
         stxWallet : ?Text;
+        ckBTCWallet: ?Text;
     };
 
     public type PropertyRequest = {
@@ -99,6 +100,7 @@ actor STXSigner {
             status = newPropertyRequest.status;
             owner = msg.caller;
             stxWallet = null;
+            ckBTCWallet = null;
         };
         registeredProperties.put(Nat.toText(newId), newProperty);
         return newId;
@@ -143,7 +145,7 @@ actor STXSigner {
                             return owned.ids;
                     };
                     case(null){
-                        return[0];
+                        return[0,0,0,0];
                     };
                 }
             };
@@ -183,6 +185,7 @@ actor STXSigner {
                             picture = property.picture;
                             description = property.description;
                             stxWallet = property.stxWallet;
+                            ckBTCWallet = property.ckBTCWallet;
                         };
                         registeredProperties.put(Nat.toText(id), updateProperty);
                         return #Ok(public_key);
@@ -199,7 +202,7 @@ actor STXSigner {
         };
     };
 
-    public shared (msg) func setStxPropertyWallet(id : Nat, wallet : Text) : async {
+    public shared (msg) func setStxPropertyWallet(id : Nat, wallet : Text,ckBTCWallet:Text) : async {
         #Ok : Text;
         #Err : Text;
     } {
@@ -219,6 +222,7 @@ actor STXSigner {
                         picture = property.picture;
                         description = property.description;
                         stxWallet = ?wallet;
+                        ckBTCWallet = ?ckBTCWallet;
                     };
                     registeredProperties.put(Nat.toText(id), updateProperty);
                     return #Ok(wallet);
@@ -252,6 +256,7 @@ actor STXSigner {
                         picture = property.picture;
                         description = property.description;
                         stxWallet = property.stxWallet;
+                        ckBTCWallet = property.ckBTCWallet;
                     };
                     registeredProperties.put(Nat.toText(id), updateProperty);
                     return #Ok(contract);
@@ -282,6 +287,24 @@ actor STXSigner {
             #Ok({ public_key = public_key });
         } catch (err) {
             #Err(Error.message(err));
+        };
+    };
+
+
+      public shared (msg) func canister_and_caller_pub_key_signer(signerPrincipal:Principal) : async Blob {
+        let caller = Principal.toBlob(msg.caller);
+        let signer = Principal.toBlob(signerPrincipal);
+        let canisterBlob = Principal.toBlob(Principal.fromActor(STXSigner));
+        let canisterDerivationPassword = Blob.fromArray([12, 1, 34, 43, 33]);
+        try {
+            let { public_key } = await ic.ecdsa_public_key({
+                canister_id = null;
+                derivation_path = [caller, canisterBlob, canisterDerivationPassword,signer];
+                key_id = { curve = #secp256k1; name = "key_1" };
+            });
+            return public_key;
+        } catch (err) {
+            return Blob.fromArray([0]);
         };
     };
 

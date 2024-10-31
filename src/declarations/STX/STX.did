@@ -22,6 +22,7 @@ type PropertyRequest =
 type Property = 
  record {
    address: text;
+   ckBTCWallet: opt text;
    contract: opt text;
    description: text;
    id: nat;
@@ -39,6 +40,7 @@ service : {
       Err: text;
       Ok: record {public_key: blob;};
     });
+  canister_and_caller_pub_key_signer: (principal) -> (blob);
   checkifHasNFT: (text, principal) -> (vec nat);
   crearPropertyWallet: (nat) -> (variant {
                                    Err: text;
@@ -55,8 +57,8 @@ service : {
                                       Err: text;
                                       Ok: text;
                                     });
-  setStxPropertyWallet: (nat, text) -> (variant {
-                                          Err: text;
-                                          Ok: text;
-                                        });
+  setStxPropertyWallet: (nat, text, text) -> (variant {
+                                                Err: text;
+                                                Ok: text;
+                                              });
 }

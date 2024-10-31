@@ -18,15 +18,25 @@ import {
   makeContractCall,
   callReadOnlyFunction,
   bufferCVFromString,
-  principalCV
+  principalCV,
+  PostConditionMode,
+  NonFungibleConditionCode,
+  makeStandardNonFungiblePostCondition,
+  createAssetInfo,
+  Pc,
+  Cl
+
 } from "@stacks/transactions";
 import { noneCV } from "@stacks/transactions/dist/clarity/types/optionalCV.js";
+
+import {Ed25519KeyIdentity} from '@dfinity/identity';
 
 import { createActor, canisterId } from "../declarations/STX/index.js";
 import { createOisyFactoryActor } from "../ic/oisywallet/index.js";
 import { Buffer } from "buffer";
 import { StacksTestnet, StacksMainnet } from "@stacks/network";
 import { useNavigate } from "react-router-dom";
+import { createTransferManagerActor } from "../ic/TransferManager/index.js";
 
 
 const buildNFTContrat = (options) => {
@@ -139,12 +149,13 @@ export const useAuthClient = (options = defaultOptions) => {
   const [stxBalance, setSTXBalance] = useState("0.0");
   const [userProperties, setUserProperties] = useState([]);
   const [NFTBalance, setNFTBalance] = useState(null);
-  const[NFTS,setNFTS] = useState(null);
+  const [NFTS, setNFTS] = useState(null);
   const [showModal, setShowModal] = useState(false); // State to control modal visibility
   const [step, setStep] = useState(1); // State to track the current step
-  const[isLoading,setIsLoading] = useState(isAuth);
-  const[isError,setIsError] = useState(null);
-  const[errorMessage,setErrorMessage] = useState(null);
+  const [isLoading, setIsLoading] = useState(isAuth);
+  const [isError, setIsError] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [transferActor, setTransferActor] = useState(null);
 
   useEffect(() => {
     // Function to update data
@@ -154,7 +165,7 @@ export const useAuthClient = (options = defaultOptions) => {
         createSTXPrivateKey();
         getUserProperties();
       }
-      if(NFTBalance){
+      if (NFTBalance) {
         getNFTsData()
       }
     };
@@ -188,11 +199,11 @@ export const useAuthClient = (options = defaultOptions) => {
     }
   }, [STXactor]);
 
-  useEffect(()=>{
-    if(NFTBalance){
+  useEffect(() => {
+    if (NFTBalance) {
       getNFTsData()
     }
-  },[NFTBalance])
+  }, [NFTBalance])
 
   const login = () => {
     authClient.login({
@@ -204,6 +215,30 @@ export const useAuthClient = (options = defaultOptions) => {
     });
   };
 
+  function parseWithBigInt(jsonString) {
+    return JSON.parse(jsonString, (key, value) =>
+      typeof value === "string" && /^[0-9]+n$/.test(value)
+        ? BigInt(value.slice(0, -1))  // Remove "n" and convert back to BigInt
+        : value
+    );
+  }
+
+  const transferNFTtoPrincipal = async ({ nftData }, principal) => {
+    console.log("in transfer NFT", nftData)
+    const network = new StacksTestnet();
+    let response = await transferActor.transFerNFTtoPrincipal(Principal.fromText(principal), nftData.contract[0]);
+    console.log("after transfer NFT", response)
+    // let Txs = parseWithBigInt(response);
+    // console.log("Txs", Txs);
+    // Txs["network"] = network;
+    // Txs["anchorMode"] = AnchorMode.Any;
+    // Txs["postConditions"] = [postCondition];
+    // let tx = await makeContractCall(Txs);
+
+    // console.log("response", tx);
+    // let txID = await broadcastTransaction(tx, network)
+    // console.log("txId", txID)
+  };
 
   const mintNFT = async (entity) => {
     setStep(3)
@@ -213,7 +248,13 @@ export const useAuthClient = (options = defaultOptions) => {
     let publicArray = entity.privateKey[0];
     publicArray[32] = 1;
     let hex = Buffer.from(publicArray).toString("hex");
-    const txOptions = {
+
+
+    let nftId = await getNFTS(entity);
+
+
+    console.log("nft id", nftId);
+    const tx2Options = {
       contractAddress: entity.stxWallet[0],
       contractName: entity.address.replace(/ /g, "_"),
       functionName: "mint",
@@ -224,12 +265,14 @@ export const useAuthClient = (options = defaultOptions) => {
       postConditions: [],
       anchorMode: AnchorMode.Any,
     };
+    console.log("tx20options", tx2Options);
+    const transaction2 = await makeContractCall(tx2Options);
 
-    const transaction = await makeContractCall(txOptions);
-
-    console.log("mintNFT", transaction);
-    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log("mintNFT", transaction2);
+    const broadcastResponse = await broadcastTransaction(transaction2, network);
     const txId = broadcastResponse.txid;
+    console.log("tx", typeof txId)
+    await STXactor.createNewMint(entity.contract[0], entity.stxWallet[0], Number(nftId));
     setShowModal(false)
     navigate("/nfts")
   };
@@ -248,13 +291,16 @@ export const useAuthClient = (options = defaultOptions) => {
       contractAddress,
       contractName,
       functionName,
-      functionArgs: [noneCV()],
+      functionArgs: [],
       network,
       senderAddress,
     };
 
     const result = await callReadOnlyFunction(options);
     console.log("looking at result form read Only function", result)
+    if (result && result.value) {
+      return result.value.value;
+    }
     // const network = new StacksTestnet();
     // let publicArray = entity.privateKey[0];
     // publicArray[32] = 1;
@@ -306,6 +352,9 @@ export const useAuthClient = (options = defaultOptions) => {
     let publicArray = responsePrivateKey.Ok;
     publicArray[32] = 1;
     let hex = Buffer.from(publicArray).toString("hex");
+    let poped=publicArray.slice(0, -1);
+    const identity = Ed25519KeyIdentity.generate(poped);
+    const ckBTCWallet = identity.getPrincipal().toText();
     console.log("response private key", responsePrivateKey);
     setStep(3)
     const stacksAddress = getAddressFromPrivateKey(
@@ -314,7 +363,8 @@ export const useAuthClient = (options = defaultOptions) => {
     );
     let settingStxAddress = await STXactor.setStxPropertyWallet(
       id,
-      stacksAddress
+      stacksAddress,
+      ckBTCWallet
     );
     console.log("response to setting stxAddres", settingStxAddress);
     setShowModal(false);
@@ -334,7 +384,7 @@ export const useAuthClient = (options = defaultOptions) => {
     const txOptions = {
       contractName: entity.address.replace(/ /g, "_"),
       codeBody: buildNFTContrat({
-        name: `NFT-Property-${entity.id.toString()}`,
+        name: entity.address.replace(/ /g, "_"),
         limit: "1000",
       }),
       senderKey: hex,
@@ -359,7 +409,7 @@ export const useAuthClient = (options = defaultOptions) => {
       );
       console.log("deployed status", deployedStatys);
       getUserProperties()
-    }else{
+    } else {
       setIsError(true);
       setErrorMessage(broadcastResponse.error)
     }
@@ -378,13 +428,13 @@ export const useAuthClient = (options = defaultOptions) => {
       setSTXBalance(response.stx.balance);
       let nftKeys = (Object.keys(response.non_fungible_tokens));
       let nftParses = nftKeys.map((item) => {
-        const count =  response.non_fungible_tokens[item].count;
+        const count = response.non_fungible_tokens[item].count;
         const parts = item.split("::");
         // Step 2: Split the second part (NFT section) by "-" and grab the last part
         const nftParts = parts[1].split("-");
         const nftNumber = parseInt(nftParts[nftParts.length - 1], 10); // Convert to a number
         // Step 3: Form the final array with the first part and the extracted number
-        return [parts[0], nftNumber,count]
+        return [parts[0], nftNumber, count]
       })
 
 
@@ -394,25 +444,25 @@ export const useAuthClient = (options = defaultOptions) => {
   };
 
 
-  const getNFTsData = async () =>{
-   let NFTsData=  await Promise.all(NFTBalance.map(async (item)=>{
-      let response =await STXactor.getPropertyNFTData(item[0]);
-      console.log("response nft data",response)
-      return {nftData:response[0],count:item[2]};
+  const getNFTsData = async () => {
+    let NFTsData = await Promise.all(NFTBalance.map(async (item) => {
+      let response = await STXactor.getPropertyNFTData(item[0]);
+      console.log("response nft data", response)
+      return { nftData: response[0], count: item[2] };
     }))
-    console.log("NFT Data",NFTsData)
+    console.log("NFT Data", NFTsData)
     setNFTS(NFTsData)
     setIsLoading(false)
   };
 
   const createSTXPrivateKey = async () => {
-    let publicHex = await STXactor.canister_and_caller_pub_key();
+    let publicHex = await transferActor.createSTXWallet();
     console.log("public hex", publicHex);
-    let publicArray = publicHex.Ok.public_key;
+    let publicArray = publicHex;
     publicArray[32] = 1;
     let hex = Buffer.from(publicArray).toString("hex");
     console.log(" before if hex", hex);
-    if (publicHex.Ok) {
+    if (publicHex) {
       const privateKey = createStacksPrivateKey(hex);
       console.log("STX private key", privateKeyToString(privateKey));
       const publicKey = getPublicKey(privateKey);
@@ -431,9 +481,9 @@ export const useAuthClient = (options = defaultOptions) => {
 
   async function updateClient(client) {
     const isAuthenticated = await client.isAuthenticated();
-    if(isAuthenticated){
+    if (isAuthenticated) {
       setIsLoading(true);
-    }else{
+    } else {
       // navigate("/login")
     }
     console.log("updating client", isAuthenticated);
@@ -456,8 +506,12 @@ export const useAuthClient = (options = defaultOptions) => {
       },
     });
 
-    setOisyActor(oisyActorInit);
+    let transferActor = createTransferManagerActor({ agentOptions: { identity } });
 
+
+
+    setOisyActor(oisyActorInit);
+    setTransferActor(transferActor);
     setPrincipalText(principalText);
     setPrincipal(principal);
     setSTX(stxActor);
@@ -495,7 +549,8 @@ export const useAuthClient = (options = defaultOptions) => {
     isLoading,
     errorMessage,
     isError,
-    setIsError
+    setIsError,
+    transferNFTtoPrincipal
   };
 };
 

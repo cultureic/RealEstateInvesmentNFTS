@@ -23,6 +23,7 @@ export const idlFactory = ({ IDL }) => {
     'status' : IDL.Text,
     'stxWallet' : IDL.Opt(IDL.Text),
     'rentValueBTC' : IDL.Nat,
+    'ckBTCWallet' : IDL.Opt(IDL.Text),
     'contract' : IDL.Opt(IDL.Text),
     'owner' : IDL.Principal,
     'description' : IDL.Text,
@@ -40,6 +41,11 @@ export const idlFactory = ({ IDL }) => {
             'Err' : IDL.Text,
           }),
         ],
+        [],
+      ),
+    'canister_and_caller_pub_key_signer' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(IDL.Nat8)],
         [],
       ),
     'checkifHasNFT' : IDL.Func(
@@ -70,7 +76,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'setStxPropertyWallet' : IDL.Func(
-        [IDL.Nat, IDL.Text],
+        [IDL.Nat, IDL.Text, IDL.Text],
         [IDL.Variant({ 'Ok' : IDL.Text, 'Err' : IDL.Text })],
         [],
       ),

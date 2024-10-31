@@ -20,18 +20,14 @@ const arrayBufferToBase64 = (buffer: Uint8Array) => {
 };
 
 const UserProperties: React.FC = () => {
-    const { userProperties, login, deployNFTContract, getNFTS, mintNFT, setShowModal, showModal, step } = useAuth();
+    const { userProperties, login, deployNFTContract, mintNFT, setShowModal, showModal, step } = useAuth();
     const [selectedEntity, setSelectedEntity] = useState<any | null>(null); // State for the selected entity
     const [isOpen, setIsOpen] = useState(false); // State to control main modal visibility
     const [isDeployModalOpen, setDeployModalOpen] = useState(false); // State for deploy confirmation modal
 
     useEffect(() => { }, [showModal, step])
 
-    useEffect(() => {
-        if (userProperties && userProperties[0]) {
-            getNFTS(userProperties[0])
-        }
-    }, [userProperties])
+   
 
     const openModal = (entity: any) => {
         setSelectedEntity(entity);

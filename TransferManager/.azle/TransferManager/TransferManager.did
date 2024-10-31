@@ -1,0 +1,6 @@
+service: () -> {
+    createSTXWallet: () -> (vec nat8);
+    getMessage2: () -> (text) query;
+    transFerNFTtoPrincipal: (principal, text) -> (text);
+    transform: (record {context:vec nat8; response:record {status:nat; body:vec nat8; headers:vec record {value:text; name:text}}}) -> (record {status:nat; body:vec nat8; headers:vec record {value:text; name:text}}) query;
+}
